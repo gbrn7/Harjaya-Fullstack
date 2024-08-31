@@ -2,8 +2,9 @@ import { useContext, useEffect, useState } from "react";
 import { Link } from "@inertiajs/react";
 import { ChevronDown } from "lucide-react";
 import { SidebarSheetContext } from "@/context/Sidebar";
+import { SidebarType } from "@/types";
 
-export function SidebarItemSecond({ icon, text, isActive, subMenu, link }) {
+export function SidebarItemSecond({ icon, text, isActive, subMenu, link }: SidebarType) {
     const { isSheetExpended } = useContext(SidebarSheetContext);
     const [isOpen, setIsOpen] = useState(isActive ? true : false);
 

@@ -64,7 +64,7 @@ export default function Login() {
                         </CardHeader>
                         <CardContent>
                             <div>
-                                <InputLabel htmlFor="email" value="Email" />
+                                <InputLabel htmlFor="email" value="Email" className="text-primary" />
 
                                 <Input
                                     id="email"
@@ -88,6 +88,7 @@ export default function Login() {
                                 <InputLabel
                                     htmlFor="password"
                                     value="Password"
+                                    className="text-primary"
                                 />
 
                                 <Input

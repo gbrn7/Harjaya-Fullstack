@@ -48,4 +48,15 @@ export interface AuthenticatedLayoutProps  {
     }[]
 }
 
-
+type SidebarType = {
+    icon: React.ReactNode,
+    text: string,
+    isActive: boolean,
+    subMenu?:
+    {
+        text: string,
+        link: string,
+    }[]
+    ,
+    link: string
+}

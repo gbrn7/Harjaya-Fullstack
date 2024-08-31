@@ -2,20 +2,7 @@ import { useContext, useState } from "react";
 import { Link } from "@inertiajs/react";
 import { SidebarContext } from "@/context/Sidebar";
 import { ChevronDown } from "lucide-react";
-
-type SidebarType = {
-    icon: React.ReactNode,
-    text: string,
-    isActive: boolean,
-    subMenu?:
-    {
-        text: string,
-        link: string,
-    }[]
-    ,
-    link: string
-
-}
+import { SidebarType } from "@/types";
 
 export function SidebarItem({ icon, text, isActive, subMenu, link }: SidebarType) {
     const { isExpended } = useContext(SidebarContext);

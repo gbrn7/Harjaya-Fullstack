@@ -38,9 +38,10 @@ import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { User } from "@/support/models";
 import { Shipment } from "@/support/models/Shipments";
+import { PageProps } from "@/types";
 
 
-export default function Index({ auth, shipments }: { auth: { User: User }, shipments: Shipment[] }) {
+export default function Index({ auth, shipments }: { auth: { user: User }, shipments: Shipment[] }) {
     const [keyword, setkeyword] = useState("");
 
     const [filters, setFilters] = useState({
@@ -53,7 +54,7 @@ export default function Index({ auth, shipments }: { auth: { User: User }, shipm
 
     return (
         <AuthenticatedLayout
-            user={auth.User}
+            user={auth.user}
             header={"Data Pengiriman"}
             breadcrumbItems={DataBelanjaBreadcrumbs}
         >
