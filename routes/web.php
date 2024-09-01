@@ -28,7 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::redirect('/shopping', '/shopping/shipments')->name('shopping');
 
     Route::prefix('shopping')->name('shopping.')->group(function () {
-        Route::get('/shipments', [ShipmentsController::class, 'index'])->name('shipments');
+        Route::get('/shipments', [ShipmentsController::class, 'index'])->name('shipments.index');
     });
 });
 

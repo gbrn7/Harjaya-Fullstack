@@ -36,21 +36,50 @@ import {
 } from "@/components/ui/pagination";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
-import { User } from "@/support/models";
-import { Shipment } from "@/support/models/Shipments";
-import { PageProps } from "@/types";
+import { User } from "@/support/models/Index";
+import { Shipment } from "@/support/models/Shipment";
+import { PaginateResponse } from "@/support/interfaces/others/PaginateResponse";
+import { ShipmentResource } from "@/support/interfaces/resources/ShipmentResource";
+import { ServiceFilterOptions } from "@/support/interfaces/others/ServiceFilterOptions";
+import { shipmentService } from "@/services/shipmentService";
+import { ScaleLoader } from "react-spinners";
+// import { usePage } from "@inertiajs/react";
+import { useTheme } from "@/components/theme-provider";
 
+export default function Index({ auth }: { auth: { user: User }, shipments?: Shipment[] }) {
 
-export default function Index({ auth, shipments }: { auth: { user: User }, shipments: Shipment[] }) {
-    const [keyword, setkeyword] = useState("");
+    const [shipmentResponse, setShipmentResponse] = useState<PaginateResponse<ShipmentResource>>();
 
-    const [filters, setFilters] = useState({
+    const [isLoading, setIsLoading] = useState(false);
+
+    const { theme } = useTheme();
+
+    const [filters, setFilters] = useState<ServiceFilterOptions>({
         page: 1,
         per_page: 10,
     });
 
+    // const { auth } = usePage().props;
 
-    useEffect(() => { }, []);
+    const fetchShipments = async () => {
+        setIsLoading(true)
+
+        try {
+            shipmentService.getAll(filters).then(res => {
+                setShipmentResponse(res);
+                setIsLoading(false)
+            })
+
+        } catch (error) {
+            console.log(error)
+            setIsLoading(false)
+        }
+
+    }
+
+    useEffect(() => {
+        fetchShipments();
+    }, [filters]);
 
     return (
         <AuthenticatedLayout
@@ -70,8 +99,6 @@ export default function Index({ auth, shipments }: { auth: { user: User }, shipm
                             type="search"
                             placeholder="Search..."
                             className="w-full rounded-lg bg-secondary pl-8 md:w-[200px] lg:w-[336px]"
-                            value={keyword}
-                            onChange={(e) => setkeyword(e.target.value)}
                         />
                     </div>
                 </CardHeader>
@@ -93,8 +120,30 @@ export default function Index({ auth, shipments }: { auth: { user: User }, shipm
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {shipments.map((shipment, Index) => (
-                                <TableRow key={Index}>
+                            {
+                                isLoading && (
+                                    <TableCell className="text-center" colSpan={6}>
+                                        <div className="wrapper">
+                                            <ScaleLoader
+                                                color={
+                                                    theme === "light"
+                                                        ? "#09090B"
+                                                        : "#F2F2F2"
+                                                }
+                                                width={2}
+                                                height={21}
+                                                className="me-1"
+                                                loading={true}
+                                                aria-label="Loading Spinner"
+                                                data-testid="loader"
+                                            />
+                                        </div>
+                                    </TableCell>
+                                )
+                            }
+
+                            {shipmentResponse?.data?.map((shipment, index) => (
+                                <TableRow key={index}>
                                     <TableCell className="font-medium">
                                         {shipment.supplier.name}
                                     </TableCell>

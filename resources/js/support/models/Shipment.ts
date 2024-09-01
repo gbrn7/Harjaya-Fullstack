@@ -1,8 +1,7 @@
-import { Suppliers } from "./Suppliers";
+import { Supplier } from "./Supplier";
 
 export interface Shipment{
   id: number,
-  supplier:Suppliers,
   plat_number: string,
   driver_name: string,
   shipment_date: string,

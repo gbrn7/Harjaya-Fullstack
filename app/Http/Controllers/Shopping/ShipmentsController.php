@@ -5,17 +5,16 @@ namespace App\Http\Controllers\Shopping;
 use App\Http\Controllers\Controller;
 use App\Models\Shipment;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class ShipmentsController extends Controller
 {
-    public function index(): Response
+    public function index()
     {
-        $shipments = Shipment::with('supplier')->latest()->get();
+        if (!request()->inertia() && request()->expectsJson()) {
+            $shipments = Shipment::with("supplier")->paginate(10);
 
-
-        return Inertia::render('Shopping/Shipments/index', [
-            'shipments' => $shipments
-        ]);
+            return response()->json($shipments);
+        }
+        return Inertia::render('Shopping/Shipments/Index');
     }
 }

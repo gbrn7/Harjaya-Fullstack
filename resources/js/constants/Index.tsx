@@ -2,6 +2,10 @@ import { sidebarItemsProps } from "@/types";
 import { usePage } from "@inertiajs/react";
 import { LayoutDashboard, ShoppingBag } from "lucide-react";
 
+export const ROUTES = {
+    SHIPMENTS: 'shopping.shipments'
+}
+
 
 export function sidebars(): sidebarItemsProps[] {
     const { url } = usePage();
@@ -21,7 +25,7 @@ export function sidebars(): sidebarItemsProps[] {
             subMenu: [
                 {
                     text: "Data Pengiriman",
-                    link: route("shopping.shipments"),
+                    link: route("shopping.shipments.index"),
                 },
                 {
                     text: "Data Barang",
@@ -61,6 +65,6 @@ export const DataBelanjaBreadcrumbs = [
     },
     {
         label: "Data Pengirirman",
-        routeName: "shopping.shipments",
+        routeName: "shopping.shipments.index",
     },
 ];
