@@ -62,7 +62,7 @@ export default function Index({ auth, shipments }: { auth: { user: User }, shipm
                 <CardHeader >
                     <CardTitle>Data Pengiriman</CardTitle>
                     <CardDescription>
-                        Manage your products and view their sales performance.
+                        Data pengiriman perusahaan.
                     </CardDescription>
                     <div className="relative ml-auto flex-1 md:grow-0">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

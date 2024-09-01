@@ -15,9 +15,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('shipment_id');
             $table->foreignId('raw_goods_type_id');
-            $table->tinyInteger('weight');
+            $table->tinyInteger('gross');
+            $table->boolean('is_return')->default(0);
+            $table->enum('grade', ["A", "B", "C", "D", "E"]);
+            $table->tinyInteger('tare');
             $table->float('price');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

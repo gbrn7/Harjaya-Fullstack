@@ -11,14 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('shipments', function (Blueprint $table) {
+        Schema::create('warehouses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('supplier_id');
-            $table->foreignId('warehouse_id');
-            $table->integer('warehouse_num');
-            $table->string('plat_number');
-            $table->string('driver_name');
-            $table->string('shipment_date');
+            $table->string('name');
+            $table->string('address');
+            $table->integer('warehouse_count');
             $table->timestamps();
             $table->softDeletes();
         });
@@ -29,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('shipments');
+        Schema::dropIfExists('warehouses');
     }
 };

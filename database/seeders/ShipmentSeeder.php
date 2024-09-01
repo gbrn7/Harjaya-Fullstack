@@ -13,11 +13,15 @@ class ShipmentSeeder extends Seeder
      */
     public function run(): void
     {
-        Shipment::create([
-            "supplier_id" => 1,
-            "plat_number" => "N 122 N",
-            "driver_name" => "tono",
-            "shipment_date" => now(),
-        ]);
+        Shipment::create(
+            [
+                "supplier_id" => 1,
+                "plat_number" => "N 122 N",
+                "driver_name" => "tono",
+                "warehouse_id" => 1,
+                "warehouse_num" => 1,
+                "shipment_date" => now(),
+            ]
+        );
     }
 }
