@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Shopping;
 
 use App\Http\Controllers\Controller;
+use App\Models\Raw_Goods_Type;
 use App\Models\Shipment;
+use App\Models\Supplier;
 use Inertia\Inertia;
 
 class ShipmentsController extends Controller
@@ -15,6 +17,13 @@ class ShipmentsController extends Controller
 
             return response()->json($shipments);
         }
-        return Inertia::render('Shopping/Shipments/Index');
+
+        $suppliers = Supplier::latest()->get();
+        $rawGoodTypes = Raw_Goods_Type::latest()->get();
+
+        return Inertia::render('Shopping/Shipments/Index', [
+            "suppliers" => $suppliers,
+            "rawGoodTypes" => $rawGoodTypes
+        ]);
     }
 }

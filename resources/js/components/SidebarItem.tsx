@@ -47,7 +47,7 @@ export function SidebarItem({ icon, text, isActive, subMenu, link }: SidebarType
                                         >
                                             <Link
                                                 href={item.link}
-                                                className="block"
+                                                className="block truncate"
                                             >
                                                 {item.text}
                                             </Link>
@@ -66,7 +66,7 @@ export function SidebarItem({ icon, text, isActive, subMenu, link }: SidebarType
                                         }`}
                                     key={index}
                                 >
-                                    <Link href={item.link} className="block">
+                                    <Link href={item.link} className="block truncate">
                                         {item.text}
                                     </Link>
                                 </li>

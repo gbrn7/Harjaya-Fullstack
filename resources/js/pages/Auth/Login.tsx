@@ -35,6 +35,8 @@ export default function Login() {
     }, []);
 
     const submit: FormEventHandler = (e) => {
+        if (isOpen) setisOpen(!isOpen)
+
         e.preventDefault();
 
         post(route("login"));

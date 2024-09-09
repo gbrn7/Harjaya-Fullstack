@@ -37,7 +37,7 @@ export default function Sidebar() {
 
     return (
         <aside
-            className={`z-50 flex-initial overflow-x-hidden overflow-y-auto w-0 sm:w-max ${isSheetExpended && "w-full"
+            className={`z-50 flex-initial overflow-y-auto w-0 sm:w-max ${isSheetExpended && "w-full"
                 } `}
         >
             <nav className="h-full transition-all hidden sm:flex sm:flex-col bg-background border-r shadow-sm">

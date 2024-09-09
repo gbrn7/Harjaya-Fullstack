@@ -24,7 +24,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Search } from "lucide-react";
+import { ChevronDown, MoreHorizontal, Search } from "lucide-react";
 import {
     Pagination,
     PaginationContent,
@@ -43,10 +43,14 @@ import { ShipmentResource } from "@/support/interfaces/resources/ShipmentResourc
 import { ServiceFilterOptions } from "@/support/interfaces/others/ServiceFilterOptions";
 import { shipmentService } from "@/services/shipmentService";
 import { ScaleLoader } from "react-spinners";
-// import { usePage } from "@inertiajs/react";
 import { useTheme } from "@/components/theme-provider";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Supplier } from "@/support/models/Supplier";
+import { RawGoodType } from "@/support/models/RawGoodType";
 
-export default function Index({ auth }: { auth: { user: User }, shipments?: Shipment[] }) {
+export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user: User }, suppliers: Supplier[], rawGoodTypes: RawGoodType[] }) {
 
     const [shipmentResponse, setShipmentResponse] = useState<PaginateResponse<ShipmentResource>>();
 
@@ -81,6 +85,7 @@ export default function Index({ auth }: { auth: { user: User }, shipments?: Ship
         fetchShipments();
     }, [filters]);
 
+
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -91,30 +96,117 @@ export default function Index({ auth }: { auth: { user: User }, shipments?: Ship
                 <CardHeader >
                     <CardTitle>Data Pengiriman</CardTitle>
                     <CardDescription>
-                        Data pengiriman perusahaan.
+                        List Data pengiriman perusahaan
                     </CardDescription>
-                    <div className="relative ml-auto flex-1 md:grow-0">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            type="search"
-                            placeholder="Search..."
-                            className="w-full rounded-lg bg-secondary pl-8 md:w-[200px] lg:w-[336px]"
-                        />
-                    </div>
                 </CardHeader>
                 <CardContent>
-                    <Table>
+
+                    <div className="filter-wrapper space-y-3 lg:space-y-0 lg:flex items-center gap-2">
+                        <div className="search-bar-filter-wrapper w-full lg:w-6/12 lg:flex">
+
+                            <div className="wrapper border-2 w-full lg:w-1/3 rounded-md rounded-r-none">
+                                <Select>
+                                    <SelectTrigger className="w-full py-0 border-none rounded-md rounded-r-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-offset-0">
+                                        <SelectValue placeholder="Pilih Kolom" defaultValue="id" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectItem value="id">ID</SelectItem>
+                                            <SelectItem value="driver">Driver</SelectItem>
+                                            <SelectItem value="plat_number">Nomor Plat</SelectItem>
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="wrapper w-full border-2 lg:w-2/3 rounded-md rounded-l-none lg:border-s-0 border-t-0 lg:border-t-2">
+                                <Input
+                                    type="search"
+                                    placeholder="Search..."
+                                    className="w-full rounded-md rounded-l-none border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="popover-wrapper border-2 rounded-md w-full lg:w-2/12">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className="rounded-md justify-between border-none w-full hover:bg-transparent"><span className="text-muted-foreground">Filter Data</span> <ChevronDown className="h-4 w-4 opacity-50" /></Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="lg:w-[38rem] md:w-[30rem] w-[25rem]">
+                                    <div className="h-72 overflow-auto p-2 space-y-3">
+                                        <div className="header-wrapper space-y-1">
+                                            <h4 className="text-md leading-none">Filter Data</h4>
+                                            <div className="desc-wrapper lg:flex lg:justify-between items-baseline space-y-2">
+                                                <p className="text-sm text-muted-foreground w-full lg:w-4/6">
+                                                    Pilih supplier atau jenis barang untuk menyaring data
+                                                </p>
+                                                <div className="action-btn-wrapper flex lg:justify-end gap-2 w-2/6">
+                                                    <Button variant={"outline"} >Clear</Button>
+                                                    <Button variant={"secondary"} >Add Filter</Button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="filter-wrapper w-full flex h-full ">
+                                            <div className="supplier-filter-wrapper w-1/2">
+                                                <div className="header w-full py-2 border border-gray-400 border-x-0 border-t-0">
+                                                    Supplier
+                                                </div>
+                                                <div className="filter-list-wrapper space-y-3  overflow-hidden py-2">
+                                                    {suppliers.map((supplier, index) => (
+                                                        <div className="flex items-center space-x-2" key={index}>
+                                                            <Checkbox id="terms" />
+                                                            <label
+                                                                htmlFor="terms"
+                                                                className="text-sm font-medium capitalize leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                            >
+                                                                {supplier.name}
+                                                            </label>
+                                                        </div>
+                                                    ))}
+
+                                                </div>
+                                            </div>
+                                            <div className="goodType-filter-wrapper w-1/2">
+                                                <div className="header w-full py-2 ps-2 border-t-0 border border-gray-400 border-e-0">
+                                                    Jenis Barang
+                                                </div>
+                                                <div className="filter-list-wrapper space-y-3  h-full overflow-hidden border border-y-0 border-gray-400 border-e-0 py-2 ps-2">
+                                                    {rawGoodTypes.map((rawGoodType, index) => (
+                                                        <div className="flex items-center space-x-2" key={index}>
+                                                            <Checkbox id="terms" />
+                                                            <label
+                                                                htmlFor="terms"
+                                                                className="text-sm font-medium capitalize leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                            >
+                                                                {rawGoodType.name}
+                                                            </label>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </PopoverContent>
+                            </Popover>
+
+                        </div>
+                    </div>
+
+                    <Table className="mt-2">
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Nama Supplier</TableHead>
-                                <TableHead>Nomor Plat</TableHead>
-                                <TableHead className="hidden md:table-cell">
-                                    Nama Driver
+                                <TableHead className="hidden md:table-cell font-bold">ID Pengiriman</TableHead>
+                                <TableHead className="font-bold">Supplier</TableHead>
+                                <TableHead className="font-bold">Nomor Plat</TableHead>
+                                <TableHead className="hidden md:table-cell font-bold">
+                                    Driver
                                 </TableHead>
-                                <TableHead className="hidden md:table-cell">
+                                <TableHead className="hidden md:table-cell font-bold">
                                     Tanggal Diterima
                                 </TableHead>
-                                <TableHead className="hidden md:table-cell">
+                                <TableHead className="font-bold">
                                     Aksi
                                 </TableHead>
                             </TableRow>
@@ -122,29 +214,34 @@ export default function Index({ auth }: { auth: { user: User }, shipments?: Ship
                         <TableBody>
                             {
                                 isLoading && (
-                                    <TableCell className="text-center" colSpan={6}>
-                                        <div className="wrapper">
-                                            <ScaleLoader
-                                                color={
-                                                    theme === "light"
-                                                        ? "#09090B"
-                                                        : "#F2F2F2"
-                                                }
-                                                width={2}
-                                                height={21}
-                                                className="me-1"
-                                                loading={true}
-                                                aria-label="Loading Spinner"
-                                                data-testid="loader"
-                                            />
-                                        </div>
-                                    </TableCell>
+                                    <TableRow>
+                                        <TableCell className="text-center" colSpan={6}>
+                                            <div className="wrapper">
+                                                <ScaleLoader
+                                                    color={
+                                                        theme === "light"
+                                                            ? "#09090B"
+                                                            : "#F2F2F2"
+                                                    }
+                                                    width={2}
+                                                    height={21}
+                                                    className="me-1"
+                                                    loading={true}
+                                                    aria-label="Loading Spinner"
+                                                    data-testid="loader"
+                                                />
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
                                 )
                             }
 
                             {shipmentResponse?.data?.map((shipment, index) => (
                                 <TableRow key={index}>
-                                    <TableCell className="font-medium">
+                                    <TableCell className="hidden md:table-cell">
+                                        {shipment.id}
+                                    </TableCell>
+                                    <TableCell>
                                         {shipment.supplier.name}
                                     </TableCell>
                                     <TableCell>
@@ -219,6 +316,6 @@ export default function Index({ auth }: { auth: { user: User }, shipments?: Ship
                     </Pagination>
                 </CardFooter>
             </Card>
-        </AuthenticatedLayout>
+        </AuthenticatedLayout >
     );
 }
