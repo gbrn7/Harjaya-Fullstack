@@ -35,16 +35,15 @@ import {
     PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Input } from "@/components/ui/input";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { User } from "@/support/models/Index";
-import { Shipment } from "@/support/models/Shipment";
 import { PaginateResponse } from "@/support/interfaces/others/PaginateResponse";
 import { ShipmentResource } from "@/support/interfaces/resources/ShipmentResource";
 import { ServiceFilterOptions } from "@/support/interfaces/others/ServiceFilterOptions";
 import { shipmentService } from "@/services/shipmentService";
 import { ScaleLoader } from "react-spinners";
 import { useTheme } from "@/components/theme-provider";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Supplier } from "@/support/models/Supplier";
@@ -67,15 +66,21 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
         per_page: 10,
         query: {
             keyword: {
-                column: "id",
+                label: "id",
                 value: "",
             },
             dateRange: {
                 from: undefined,
                 to: undefined
             },
-            suppliers: [],
-            rawGoodTypes: [],
+            suppliers: {
+                filterLabel: "Supplier",
+                filters: []
+            },
+            rawGoodTypes: {
+                filterLabel: "Jenis Barang",
+                filters: []
+            },
         },
     });
 
@@ -145,18 +150,18 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                         <div className="search-bar-filter-wrapper w-full lg:w-6/12 lg:flex text-inherit">
 
                             <div className="wrapper border-2 w-full lg:w-1/3 rounded-t-md lg:rounded-l-md lg:rounded-r-none ">
-                                <Select defaultValue={filters?.query?.keyword?.column} onValueChange={(e) => setFilters({
+                                <Select defaultValue={filters?.query?.keyword?.label} onValueChange={(e) => setFilters({
                                     ...filters,
                                     query: {
                                         ...filters.query,
                                         keyword: {
                                             ...filters?.query?.keyword,
-                                            column: e.valueOf()
+                                            label: e.valueOf()
                                         }
                                     }
                                 })}>
                                     <SelectTrigger className="w-full py-0 border-none rounded-md rounded-r-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-offset-0">
-                                        <SelectValue placeholder="Pilih Kolom" defaultValue={filters?.query?.keyword?.column} />
+                                        <SelectValue placeholder="Pilih Kolom" defaultValue={filters?.query?.keyword?.label} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectGroup>
@@ -218,14 +223,16 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                                                                 ...filters,
                                                                 query: {
                                                                     ...filters.query,
-                                                                    suppliers: [
-                                                                        ...filters?.query?.suppliers,
-                                                                        {
-                                                                            id: supplier.id,
-                                                                            value: supplier.name,
-                                                                            label: "Supplier"
-                                                                        }
-                                                                    ]
+                                                                    suppliers: {
+                                                                        ...filters?.query.suppliers,
+                                                                        filters: [
+                                                                            ...filters?.query.suppliers.filters,
+                                                                            {
+                                                                                id: supplier.id,
+                                                                                label: supplier.name
+                                                                            }
+                                                                        ]
+                                                                    }
                                                                 }
                                                             })} />
                                                             <label
@@ -250,14 +257,16 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                                                                 ...filters,
                                                                 query: {
                                                                     ...filters.query,
-                                                                    rawGoodTypes: [
-                                                                        ...filters.query.rawGoodTypes,
-                                                                        {
-                                                                            id: rawGoodType.id,
-                                                                            value: rawGoodType.name,
-                                                                            label: "Jenis Barang"
-                                                                        }
-                                                                    ]
+                                                                    rawGoodTypes: {
+                                                                        ...filters?.query?.rawGoodTypes,
+                                                                        filters: [
+                                                                            ...filters?.query?.rawGoodTypes.filters,
+                                                                            {
+                                                                                id: rawGoodType.id,
+                                                                                label: rawGoodType.name
+                                                                            }
+                                                                        ]
+                                                                    }
                                                                 }
                                                             })} />
                                                             <label

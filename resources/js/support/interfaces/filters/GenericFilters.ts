@@ -1,5 +1,8 @@
 export interface GenericFilters{
-  id: string|number,
-  value: string|number,
-  label:string
+  filterLabel: string,
+  filters: {
+    id: string|number,
+    label: string|number,
+   }[]
+  
 }

@@ -5,6 +5,6 @@ import { Keyword } from "./Keyword";
 export interface ShipmentFilters{
   keyword: Keyword,
   dateRange: DateRange,
-  suppliers: GenericFilters[],
-  rawGoodTypes: GenericFilters[],
+  suppliers: GenericFilters,
+  rawGoodTypes: GenericFilters,
 }

@@ -1,5 +1,5 @@
 export interface ServiceFilterOptions<query> {
-  page?: number,
+  page?: number ,
   perpage?:number,
   sortBy?: string,
   sortOrder?:'asc'|'desc',
