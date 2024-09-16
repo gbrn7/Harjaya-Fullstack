@@ -52,6 +52,7 @@ import { RawGoodType } from "@/support/models/RawGoodType";
 import { DateRange } from "react-day-picker"
 import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar";
+import { ShipmentFilters } from "@/support/interfaces/filters/ShipmentFilters";
 
 export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user: User }, suppliers: Supplier[], rawGoodTypes: RawGoodType[] }) {
 
@@ -61,7 +62,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
 
     const { theme } = useTheme();
 
-    const [filters, setFilters] = useState<ServiceFilterOptions>({
+    const [filters, setFilters] = useState<ServiceFilterOptions<ShipmentFilters>>({
         page: 1,
         per_page: 10,
         query: {
@@ -70,13 +71,15 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                 value: "",
             },
             dateRange: {
-                from: null,
-                to: null
-            }
+                from: undefined,
+                to: undefined
+            },
+            suppliers: [],
+            rawGoodTypes: [],
         },
     });
 
-    const [date, setDate] = React.useState<DateRange | undefined>({
+    const [date, setDate] = useState<DateRange | undefined>({
         from: undefined,
         to: undefined,
     })
@@ -141,19 +144,19 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                     <div className="filter-wrapper space-y-3 lg:space-y-0 lg:flex items-center gap-2 text-md font-medium">
                         <div className="search-bar-filter-wrapper w-full lg:w-6/12 lg:flex text-inherit">
 
-                            <div className="wrapper border-2 w-full lg:w-1/3 rounded-md rounded-r-none ">
-                                <Select defaultValue={filters.query.keyword.column} onValueChange={(e) => setFilters({
+                            <div className="wrapper border-2 w-full lg:w-1/3 rounded-t-md lg:rounded-l-md lg:rounded-r-none ">
+                                <Select defaultValue={filters?.query?.keyword?.column} onValueChange={(e) => setFilters({
                                     ...filters,
                                     query: {
                                         ...filters.query,
                                         keyword: {
-                                            ...filters.query.keyword,
+                                            ...filters?.query?.keyword,
                                             column: e.valueOf()
                                         }
                                     }
                                 })}>
                                     <SelectTrigger className="w-full py-0 border-none rounded-md rounded-r-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-offset-0">
-                                        <SelectValue placeholder="Pilih Kolom" defaultValue={filters.query.keyword.column} />
+                                        <SelectValue placeholder="Pilih Kolom" defaultValue={filters?.query?.keyword?.column} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectGroup>
@@ -164,14 +167,11 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                                     </SelectContent>
                                 </Select>
                             </div>
-                            {console.log("filters")}
-                            {console.log(filters)}
-
-                            <div className="wrapper w-full border-2 lg:w-2/3 rounded-md rounded-l-none lg:border-s-0 border-t-0 lg:border-t-2">
+                            <div className="wrapper w-full border-2 lg:w-2/3 rounded-b-md lg:rounded-r-md lg:rounded-l-none lg:border-s-0 border-t-0 lg:border-t-2">
                                 <Input
                                     type="search"
                                     placeholder="Search..."
-                                    value={filters.query.keyword.value}
+                                    value={filters?.query?.keyword?.value}
                                     onChange={(e) => setFilters(
                                         {
                                             ...filters,
@@ -183,7 +183,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                                                 }
                                             }
                                         })}
-                                    className="w-full rounded-md rounded-l-none border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                    className="w-full rounded-md lg:rounded-l-none border-none focus-visible:ring-0 focus-visible:ring-offset-0"
                                 />
                             </div>
                         </div>
@@ -214,11 +214,18 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                                                 <div className="filter-list-wrapper space-y-3  overflow-hidden py-2">
                                                     {suppliers.map((supplier, index) => (
                                                         <div className="flex items-center space-x-2" key={index}>
-                                                            <Checkbox id="suppliers" onCheckedChange={(e) => setFilters({
+                                                            <Checkbox id="suppliers" value={supplier.id} onCheckedChange={(e) => setFilters({
                                                                 ...filters,
                                                                 query: {
                                                                     ...filters.query,
-
+                                                                    suppliers: [
+                                                                        ...filters?.query?.suppliers,
+                                                                        {
+                                                                            id: supplier.id,
+                                                                            value: supplier.name,
+                                                                            label: "Supplier"
+                                                                        }
+                                                                    ]
                                                                 }
                                                             })} />
                                                             <label
@@ -239,7 +246,20 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                                                 <div className="filter-list-wrapper space-y-3  h-full overflow-hidden border border-y-0 border-gray-400 border-e-0 py-2 ps-2">
                                                     {rawGoodTypes.map((rawGoodType, index) => (
                                                         <div className="flex items-center space-x-2" key={index}>
-                                                            <Checkbox id="terms" />
+                                                            <Checkbox id="rawGoodType" value={rawGoodType.id} onCheckedChange={(e) => setFilters({
+                                                                ...filters,
+                                                                query: {
+                                                                    ...filters.query,
+                                                                    rawGoodTypes: [
+                                                                        ...filters.query.rawGoodTypes,
+                                                                        {
+                                                                            id: rawGoodType.id,
+                                                                            value: rawGoodType.name,
+                                                                            label: "Jenis Barang"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            })} />
                                                             <label
                                                                 htmlFor="terms"
                                                                 className="text-sm font-medium capitalize leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
