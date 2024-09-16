@@ -24,7 +24,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, MoreHorizontal, Search } from "lucide-react";
+import { CalendarIcon, ChevronDown, MoreHorizontal, Search, SlidersHorizontal, X } from "lucide-react";
 import {
     Pagination,
     PaginationContent,
@@ -35,7 +35,7 @@ import {
     PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Input } from "@/components/ui/input";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { User } from "@/support/models/Index";
 import { Shipment } from "@/support/models/Shipment";
 import { PaginateResponse } from "@/support/interfaces/others/PaginateResponse";
@@ -49,6 +49,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Supplier } from "@/support/models/Supplier";
 import { RawGoodType } from "@/support/models/RawGoodType";
+import { DateRange } from "react-day-picker"
+import { format } from "date-fns"
+import { Calendar } from "@/components/ui/calendar";
 
 export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user: User }, suppliers: Supplier[], rawGoodTypes: RawGoodType[] }) {
 
@@ -61,30 +64,65 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
     const [filters, setFilters] = useState<ServiceFilterOptions>({
         page: 1,
         per_page: 10,
+        query: {
+            keyword: {
+                column: "id",
+                value: "",
+            },
+            dateRange: {
+                from: null,
+                to: null
+            }
+        },
     });
 
-    // const { auth } = usePage().props;
+    const [date, setDate] = React.useState<DateRange | undefined>({
+        from: undefined,
+        to: undefined,
+    })
 
-    const fetchShipments = async () => {
-        setIsLoading(true)
-
+    async function fetchShipments() {
         try {
-            shipmentService.getAll(filters).then(res => {
-                setShipmentResponse(res);
-                setIsLoading(false)
-            })
-
+            setIsLoading(true)
+            const res = await shipmentService.getAll(filters)
+            setShipmentResponse(res);
+            setIsLoading(false)
         } catch (error) {
-            console.log(error)
             setIsLoading(false)
         }
-
     }
 
     useEffect(() => {
         fetchShipments();
     }, [filters]);
 
+    useEffect(() => {
+        if (date?.from && date?.to) {
+            setFilters({
+                ...filters,
+                query: {
+                    ...filters.query,
+                    dateRange: {
+                        from: date.from.toLocaleDateString(),
+                        to: date.to.toLocaleDateString()
+                    }
+                }
+            }
+            )
+        } else if (date?.from === undefined && date?.to === undefined) {
+            setFilters({
+                ...filters,
+                query: {
+                    ...filters.query,
+                    dateRange: {
+                        from: null,
+                        to: null
+                    }
+                }
+            }
+            )
+        }
+    }, [date]);
 
     return (
         <AuthenticatedLayout
@@ -100,14 +138,22 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
+                    <div className="filter-wrapper space-y-3 lg:space-y-0 lg:flex items-center gap-2 text-md font-medium">
+                        <div className="search-bar-filter-wrapper w-full lg:w-6/12 lg:flex text-inherit">
 
-                    <div className="filter-wrapper space-y-3 lg:space-y-0 lg:flex items-center gap-2">
-                        <div className="search-bar-filter-wrapper w-full lg:w-6/12 lg:flex">
-
-                            <div className="wrapper border-2 w-full lg:w-1/3 rounded-md rounded-r-none">
-                                <Select>
+                            <div className="wrapper border-2 w-full lg:w-1/3 rounded-md rounded-r-none ">
+                                <Select defaultValue={filters.query.keyword.column} onValueChange={(e) => setFilters({
+                                    ...filters,
+                                    query: {
+                                        ...filters.query,
+                                        keyword: {
+                                            ...filters.query.keyword,
+                                            column: e.valueOf()
+                                        }
+                                    }
+                                })}>
                                     <SelectTrigger className="w-full py-0 border-none rounded-md rounded-r-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-offset-0">
-                                        <SelectValue placeholder="Pilih Kolom" defaultValue="id" />
+                                        <SelectValue placeholder="Pilih Kolom" defaultValue={filters.query.keyword.column} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectGroup>
@@ -118,32 +164,45 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                                     </SelectContent>
                                 </Select>
                             </div>
+                            {console.log("filters")}
+                            {console.log(filters)}
 
                             <div className="wrapper w-full border-2 lg:w-2/3 rounded-md rounded-l-none lg:border-s-0 border-t-0 lg:border-t-2">
                                 <Input
                                     type="search"
                                     placeholder="Search..."
+                                    value={filters.query.keyword.value}
+                                    onChange={(e) => setFilters(
+                                        {
+                                            ...filters,
+                                            query: {
+                                                ...filters.query,
+                                                keyword: {
+                                                    ...filters.query.keyword,
+                                                    value: e.target.value
+                                                }
+                                            }
+                                        })}
                                     className="w-full rounded-md rounded-l-none border-none focus-visible:ring-0 focus-visible:ring-offset-0"
                                 />
                             </div>
                         </div>
-
-                        <div className="popover-wrapper border-2 rounded-md w-full lg:w-2/12">
+                        <div className="popover-wrapper border-2 rounded-md w-full lg:w-2/12 text-inherit">
                             <Popover>
                                 <PopoverTrigger asChild>
-                                    <Button variant="outline" className="rounded-md justify-between border-none w-full hover:bg-transparent"><span className="text-muted-foreground">Filter Data</span> <ChevronDown className="h-4 w-4 opacity-50" /></Button>
+                                    <Button variant="outline" className="rounded-md justify-between border-none w-full hover:bg-transparent"><span className="text-muted-foreground text-md font-medium flex items-center"><SlidersHorizontal className="h-4 w-4 me-2" />Filter Data</span> <ChevronDown className="h-4 w-4 opacity-50" /></Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="lg:w-[38rem] md:w-[30rem] w-[25rem]">
                                     <div className="h-72 overflow-auto p-2 space-y-3">
-                                        <div className="header-wrapper space-y-1">
+                                        <div className="header-wrapper space-y-2 lg:space-y-2">
                                             <h4 className="text-md leading-none">Filter Data</h4>
-                                            <div className="desc-wrapper lg:flex lg:justify-between items-baseline space-y-2">
+                                            <div className="desc-wrapper lg:flex lg:justify-between items-baseline space-y-1">
                                                 <p className="text-sm text-muted-foreground w-full lg:w-4/6">
                                                     Pilih supplier atau jenis barang untuk menyaring data
                                                 </p>
                                                 <div className="action-btn-wrapper flex lg:justify-end gap-2 w-2/6">
                                                     <Button variant={"outline"} >Clear</Button>
-                                                    <Button variant={"secondary"} >Add Filter</Button>
+                                                    <Button variant={"default"} >Add Filter</Button>
                                                 </div>
                                             </div>
                                         </div>
@@ -155,9 +214,15 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                                                 <div className="filter-list-wrapper space-y-3  overflow-hidden py-2">
                                                     {suppliers.map((supplier, index) => (
                                                         <div className="flex items-center space-x-2" key={index}>
-                                                            <Checkbox id="terms" />
+                                                            <Checkbox id="suppliers" onCheckedChange={(e) => setFilters({
+                                                                ...filters,
+                                                                query: {
+                                                                    ...filters.query,
+
+                                                                }
+                                                            })} />
                                                             <label
-                                                                htmlFor="terms"
+                                                                htmlFor="suppliers"
                                                                 className="text-sm font-medium capitalize leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                                             >
                                                                 {supplier.name}
@@ -192,6 +257,49 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                             </Popover>
 
                         </div>
+                        <div className="overflow-hidden w-full lg:w-2/12 text-inherit">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        id="date"
+                                        variant={"outline"}
+                                        className={
+                                            "border-2 flex justify-between items-center font-normal w-full hover:bg-transparent rounded-md"
+                                        }
+                                    >
+                                        <div className="content-wrapper flex items-center">
+                                            <CalendarIcon className="mr-2 text-muted-foreground h-4 w-4" />
+                                            {date?.from && date?.to ? (
+                                                date.to ? (
+                                                    <>
+                                                        {format(date.from, "dd/LL/y")} -{" "}
+                                                        {format(date.to, "dd/LL/y")}
+                                                    </>
+                                                ) : (
+                                                    format(date.from, "dd/LL/y")
+                                                )
+                                            ) : (
+                                                <span className="text-muted-foreground text-md font-medium">Rentang Tanggal</span>
+                                            )}
+                                        </div>
+                                        {date?.from || date?.to ? <X className="h-4 w-4" onClick={() => setDate({ ...date, to: undefined, from: undefined })} /> : ""}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="end">
+                                    <Calendar
+                                        initialFocus
+                                        mode="range"
+                                        defaultMonth={date?.from}
+                                        selected={date}
+                                        onSelect={setDate}
+                                        numberOfMonths={2}
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                        <div className="lg:w-2/12 w-full text-inherit">
+                            <Button variant={"secondary"} className="w-full">Apply</Button>
+                        </div>
                     </div>
 
                     <Table className="mt-2">
@@ -199,11 +307,11 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                             <TableRow>
                                 <TableHead className="hidden md:table-cell font-bold">ID Pengiriman</TableHead>
                                 <TableHead className="font-bold">Supplier</TableHead>
-                                <TableHead className="font-bold">Nomor Plat</TableHead>
+                                <TableHead className="hidden md:table-cell font-bold">Nomor Plat</TableHead>
                                 <TableHead className="hidden md:table-cell font-bold">
                                     Driver
                                 </TableHead>
-                                <TableHead className="hidden md:table-cell font-bold">
+                                <TableHead>
                                     Tanggal Diterima
                                 </TableHead>
                                 <TableHead className="font-bold">
@@ -213,7 +321,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                         </TableHeader>
                         <TableBody>
                             {
-                                isLoading && (
+                                isLoading ? (
                                     <TableRow>
                                         <TableCell className="text-center" colSpan={6}>
                                             <div className="wrapper">
@@ -233,55 +341,61 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                                             </div>
                                         </TableCell>
                                     </TableRow>
+                                ) : shipmentResponse?.data.length ? (
+                                    shipmentResponse?.data?.map((shipment, index) => (
+                                        <TableRow key={index} className="font-medium">
+                                            <TableCell className="hidden md:table-cell">
+                                                {shipment.id}
+                                            </TableCell>
+                                            <TableCell>
+                                                {shipment.supplier.name}
+                                            </TableCell>
+                                            <TableCell className="hidden md:table-cell">
+                                                {shipment.plat_number}
+                                            </TableCell>
+                                            <TableCell className="hidden md:table-cell">
+                                                {shipment.driver_name}
+                                            </TableCell>
+                                            <TableCell>
+                                                {shipment.shipment_date}
+                                            </TableCell>
+                                            <TableCell>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button
+                                                            aria-haspopup="true"
+                                                            size="icon"
+                                                            variant="ghost"
+                                                        >
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                            <span className="sr-only">
+                                                                Toggle menu
+                                                            </span>
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuLabel>
+                                                            Aksi
+                                                        </DropdownMenuLabel>
+                                                        <DropdownMenuItem>
+                                                            Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem>
+                                                            Hapus
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell className="text-center text-md" colSpan={6}>
+                                            Data Tidak Ditemukan
+                                        </TableCell>
+                                    </TableRow>
                                 )
                             }
-
-                            {shipmentResponse?.data?.map((shipment, index) => (
-                                <TableRow key={index}>
-                                    <TableCell className="hidden md:table-cell">
-                                        {shipment.id}
-                                    </TableCell>
-                                    <TableCell>
-                                        {shipment.supplier.name}
-                                    </TableCell>
-                                    <TableCell>
-                                        {shipment.plat_number}
-                                    </TableCell>
-                                    <TableCell className="hidden md:table-cell">
-                                        {shipment.driver_name}
-                                    </TableCell>
-                                    <TableCell className="hidden md:table-cell">
-                                        {shipment.shipment_date}
-                                    </TableCell>
-                                    <TableCell>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button
-                                                    aria-haspopup="true"
-                                                    size="icon"
-                                                    variant="ghost"
-                                                >
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                    <span className="sr-only">
-                                                        Toggle menu
-                                                    </span>
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuLabel>
-                                                    Aksi
-                                                </DropdownMenuLabel>
-                                                <DropdownMenuItem>
-                                                    Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem>
-                                                    Hapus
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
                         </TableBody>
                     </Table>
                 </CardContent>
