@@ -4,8 +4,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { Head } from "@inertiajs/react";
 import { AuthenticatedLayoutProps } from "@/types";
 
-
-
 export default function AuthenticatedLayout({
     children,
     user,

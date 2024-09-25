@@ -1,4 +1,3 @@
-import Breadcrumbs from "@/components/BreadCrumbs";
 import AuthenticatedLayout from "@/layouts/Authenticated/Index";
 import { PageProps } from "@/types";
 

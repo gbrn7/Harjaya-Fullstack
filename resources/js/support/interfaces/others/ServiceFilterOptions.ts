@@ -1,8 +1,6 @@
-export interface ServiceFilterOptions<query> {
-  page?: number ,
-  perpage?:number,
+export interface ServiceFilterOptions {
+  page: number ,
+  limit:number,
   sortBy?: string,
   sortOrder?:'asc'|'desc',
-  query: query,
-  [key: string]:any // allow for additional filter option
 }

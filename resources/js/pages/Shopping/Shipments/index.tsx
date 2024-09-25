@@ -24,7 +24,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, ChevronDown, MoreHorizontal, Search, SlidersHorizontal, X } from "lucide-react";
+import { CalendarIcon, ChevronDown, MoreHorizontal, SlidersHorizontal, X } from "lucide-react";
 import {
     Pagination,
     PaginationContent,
@@ -52,8 +52,17 @@ import { DateRange } from "react-day-picker"
 import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar";
 import { ShipmentFilters } from "@/support/interfaces/filters/ShipmentFilters";
+import { CheckedState } from "@radix-ui/react-checkbox";
 
-export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user: User }, suppliers: Supplier[], rawGoodTypes: RawGoodType[] }) {
+type Shipment = {
+    auth: {
+        user: User
+    },
+    suppliers: Supplier[],
+    rawGoodTypes: RawGoodType[]
+}
+
+export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
 
     const [shipmentResponse, setShipmentResponse] = useState<PaginateResponse<ShipmentResource>>();
 
@@ -61,28 +70,25 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
 
     const { theme } = useTheme();
 
-    const [filters, setFilters] = useState<ServiceFilterOptions<ShipmentFilters>>({
+    const [filters, setFilters] = useState<ShipmentFilters>({
         page: 1,
-        per_page: 10,
-        query: {
-            keyword: {
-                label: "id",
-                value: "",
-            },
-            dateRange: {
-                from: undefined,
-                to: undefined
-            },
-            suppliers: {
-                filterLabel: "Supplier",
-                filters: []
-            },
-            rawGoodTypes: {
-                filterLabel: "Jenis Barang",
-                filters: []
-            },
-        },
+        limit: 10,
     });
+
+    const isButtonDisabled = (): boolean => {
+        const requiredFields: (keyof ShipmentFilters)[] = [
+            'query',
+            'suppliers',
+            'rawGoodTypes',
+            'start_created_at',
+            'end_created_at',
+        ];
+
+        return !requiredFields.some(
+            (field) => !filters[field] || (Array.isArray(filters[field]) && filters[field]?.length === 0)
+        );
+    };
+
 
     const [date, setDate] = useState<DateRange | undefined>({
         from: undefined,
@@ -92,12 +98,93 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
     async function fetchShipments() {
         try {
             setIsLoading(true)
-            const res = await shipmentService.getAll(filters)
+            let finalFilters = { ...filters }
+
+            if (finalFilters.query) {
+                finalFilters = { ...filters, [filters.type || "id"]: filters.query }
+                delete finalFilters["type"]
+                delete finalFilters["query"]
+            }
+
+            console.log("Final filters")
+            console.log(finalFilters)
+            const res = await shipmentService.getAll(finalFilters)
             setShipmentResponse(res);
             setIsLoading(false)
         } catch (error) {
             setIsLoading(false)
         }
+    }
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.value !== "") {
+            setFilters(current => {
+                const { type } = current
+                if (type) {
+                    return {
+                        ...filters,
+                        query: e.target.value
+                    }
+                } else {
+                    return {
+                        ...filters,
+                        query: e.target.value,
+                        type: "id"
+                    }
+                }
+
+            })
+
+            return
+        }
+
+        setFilters(current => {
+            const { query, type, ...rest } = current;
+            return rest;
+        })
+
+    }
+
+
+    const handleSuppliersCheckboxChange = (checked: CheckedState, supplier: Supplier) => {
+        if (checked) {
+            return setFilters({
+                ...filters,
+                suppliers: [...(filters.suppliers || []), supplier.id]
+            })
+        }
+
+        return setFilters(current => {
+            const newState = { ...current }
+            newState.suppliers = current?.suppliers?.filter((value) => value !== supplier.id)
+            if (newState.suppliers?.length === 0) delete newState.suppliers
+            return newState
+        })
+    }
+
+    const handleRawGoodsCheckboxChange = (checked: CheckedState, rawGoodType: RawGoodType) => {
+        if (checked) {
+            return setFilters({
+                ...filters,
+                rawGoodTypes: [...(filters.rawGoodTypes || []), rawGoodType.id]
+            })
+        }
+
+        return setFilters(current => {
+            const newState = { ...current }
+            newState.rawGoodTypes = current?.rawGoodTypes?.filter((value) => value !== rawGoodType.id)
+            if (newState.rawGoodTypes?.length === 0) delete newState.rawGoodTypes
+            return newState
+        })
+    }
+
+    const handleClearDate = () => {
+        setDate({ ...date, to: undefined, from: undefined })
+        setFilters((current) => {
+            const { start_created_at, end_created_at, ...rest } = current
+
+            return rest
+        })
     }
 
     useEffect(() => {
@@ -108,25 +195,8 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
         if (date?.from && date?.to) {
             setFilters({
                 ...filters,
-                query: {
-                    ...filters.query,
-                    dateRange: {
-                        from: date.from.toLocaleDateString(),
-                        to: date.to.toLocaleDateString()
-                    }
-                }
-            }
-            )
-        } else if (date?.from === undefined && date?.to === undefined) {
-            setFilters({
-                ...filters,
-                query: {
-                    ...filters.query,
-                    dateRange: {
-                        from: null,
-                        to: null
-                    }
-                }
+                start_created_at: date.from.toISOString(),
+                end_created_at: date.to.toISOString()
             }
             )
         }
@@ -138,6 +208,8 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
             header={"Data Pengiriman"}
             breadcrumbItems={DataBelanjaBreadcrumbs}
         >
+            {console.log("filters")}
+            {console.log(filters)}
             <Card className="pb-12">
                 <CardHeader >
                     <CardTitle>Data Pengiriman</CardTitle>
@@ -150,18 +222,12 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                         <div className="search-bar-filter-wrapper w-full lg:w-6/12 lg:flex text-inherit">
 
                             <div className="wrapper border-2 w-full lg:w-1/3 rounded-t-md lg:rounded-l-md lg:rounded-r-none ">
-                                <Select defaultValue={filters?.query?.keyword?.label} onValueChange={(e) => setFilters({
+                                <Select defaultValue={filters?.type} onValueChange={(e) => setFilters({
                                     ...filters,
-                                    query: {
-                                        ...filters.query,
-                                        keyword: {
-                                            ...filters?.query?.keyword,
-                                            label: e.valueOf()
-                                        }
-                                    }
+                                    type: e.valueOf()
                                 })}>
                                     <SelectTrigger className="w-full py-0 border-none rounded-md rounded-r-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-offset-0">
-                                        <SelectValue placeholder="Pilih Kolom" defaultValue={filters?.query?.keyword?.label} />
+                                        <SelectValue placeholder="Pilih Kolom" defaultValue={"id"} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectGroup>
@@ -176,18 +242,8 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                                 <Input
                                     type="search"
                                     placeholder="Search..."
-                                    value={filters?.query?.keyword?.value}
-                                    onChange={(e) => setFilters(
-                                        {
-                                            ...filters,
-                                            query: {
-                                                ...filters.query,
-                                                keyword: {
-                                                    ...filters.query.keyword,
-                                                    value: e.target.value
-                                                }
-                                            }
-                                        })}
+                                    value={filters?.query || ""}
+                                    onChange={handleInputChange}
                                     className="w-full rounded-md lg:rounded-l-none border-none focus-visible:ring-0 focus-visible:ring-offset-0"
                                 />
                             </div>
@@ -218,23 +274,8 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                                                 </div>
                                                 <div className="filter-list-wrapper space-y-3  overflow-hidden py-2">
                                                     {suppliers.map((supplier, index) => (
-                                                        <div className="flex items-center space-x-2" key={index}>
-                                                            <Checkbox id="suppliers" value={supplier.id} onCheckedChange={(e) => setFilters({
-                                                                ...filters,
-                                                                query: {
-                                                                    ...filters.query,
-                                                                    suppliers: {
-                                                                        ...filters?.query.suppliers,
-                                                                        filters: [
-                                                                            ...filters?.query.suppliers.filters,
-                                                                            {
-                                                                                id: supplier.id,
-                                                                                label: supplier.name
-                                                                            }
-                                                                        ]
-                                                                    }
-                                                                }
-                                                            })} />
+                                                        <div className="flex items-center space-x-2" key={index} >
+                                                            <Checkbox checked={filters?.suppliers?.includes(supplier.id) || false} id="suppliers" value={supplier.id} onCheckedChange={(checked) => handleSuppliersCheckboxChange(checked, supplier)} />
                                                             <label
                                                                 htmlFor="suppliers"
                                                                 className="text-sm font-medium capitalize leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -253,22 +294,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                                                 <div className="filter-list-wrapper space-y-3  h-full overflow-hidden border border-y-0 border-gray-400 border-e-0 py-2 ps-2">
                                                     {rawGoodTypes.map((rawGoodType, index) => (
                                                         <div className="flex items-center space-x-2" key={index}>
-                                                            <Checkbox id="rawGoodType" value={rawGoodType.id} onCheckedChange={(e) => setFilters({
-                                                                ...filters,
-                                                                query: {
-                                                                    ...filters.query,
-                                                                    rawGoodTypes: {
-                                                                        ...filters?.query?.rawGoodTypes,
-                                                                        filters: [
-                                                                            ...filters?.query?.rawGoodTypes.filters,
-                                                                            {
-                                                                                id: rawGoodType.id,
-                                                                                label: rawGoodType.name
-                                                                            }
-                                                                        ]
-                                                                    }
-                                                                }
-                                                            })} />
+                                                            <Checkbox checked={filters.rawGoodTypes?.includes(rawGoodType.id) || false} id="rawGoodType" value={rawGoodType.id} onCheckedChange={(checked) => handleRawGoodsCheckboxChange(checked, rawGoodType)} />
                                                             <label
                                                                 htmlFor="terms"
                                                                 className="text-sm font-medium capitalize leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -299,19 +325,15 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                                         <div className="content-wrapper flex items-center">
                                             <CalendarIcon className="mr-2 text-muted-foreground h-4 w-4" />
                                             {date?.from && date?.to ? (
-                                                date.to ? (
-                                                    <>
-                                                        {format(date.from, "dd/LL/y")} -{" "}
-                                                        {format(date.to, "dd/LL/y")}
-                                                    </>
-                                                ) : (
-                                                    format(date.from, "dd/LL/y")
-                                                )
+                                                <span className="text-sm">
+                                                    {format(date.from, "dd/LL/y")} -{" "}
+                                                    {format(date.to, "dd/LL/y")}
+                                                </span>
                                             ) : (
                                                 <span className="text-muted-foreground text-md font-medium">Rentang Tanggal</span>
                                             )}
                                         </div>
-                                        {date?.from || date?.to ? <X className="h-4 w-4" onClick={() => setDate({ ...date, to: undefined, from: undefined })} /> : ""}
+                                        {date?.from && date?.to && <X className="h-4 w-4" onClick={handleClearDate} />}
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="end">
@@ -327,7 +349,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: { auth: { user:
                             </Popover>
                         </div>
                         <div className="lg:w-2/12 w-full text-inherit">
-                            <Button variant={"secondary"} className="w-full">Apply</Button>
+                            <Button variant={"default"} onClick={fetchShipments} className="w-full" disabled={isButtonDisabled()}>Terapkan</Button>
                         </div>
                     </div>
 

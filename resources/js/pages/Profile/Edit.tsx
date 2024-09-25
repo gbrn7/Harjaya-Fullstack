@@ -1,7 +1,6 @@
 import AuthenticatedLayout from "@/layouts/Authenticated/Index";
 import UpdatePasswordForm from "./Partials/UpdatePasswordForm";
 import UpdateProfileInformationForm from "./Partials/UpdateProfileInformationForm";
-import { Head } from "@inertiajs/react";
 import { ProfileBreadcrumbs } from "@/constants/Index";
 import { PageProps } from "@/types";
 
