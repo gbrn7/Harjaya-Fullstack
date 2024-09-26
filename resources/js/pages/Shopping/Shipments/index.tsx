@@ -34,6 +34,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/components/ui/pagination";
+import { buildUrl } from 'build-url-ts';
 import { Input } from "@/components/ui/input";
 import { useEffect, useRef, useState } from "react";
 import { User } from "@/support/models/Index";
@@ -52,6 +53,7 @@ import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar";
 import { ShipmentFilters } from "@/support/interfaces/filters/ShipmentFilters";
 import { CheckedState } from "@radix-ui/react-checkbox";
+import { router, usePage } from "@inertiajs/react";
 
 type Shipment = {
     auth: {
@@ -64,6 +66,8 @@ type Shipment = {
 export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
 
     const [shipmentResponse, setShipmentResponse] = useState<PaginateResponse<ShipmentResource>>();
+    const { url } = usePage();
+
 
     const popoverWrapperref = useRef<HTMLDivElement>(null);
     const popoverContentref = useRef<HTMLDivElement>(null);
@@ -194,6 +198,19 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
 
         fetchShipments()
     }
+
+    const pushUrl = () => {
+
+        const newUrl = buildUrl(url, {
+            queryParams: { ...filters }
+        })
+
+        router.visit(newUrl);
+
+        // router.visit(newUrl, { data: { ...filters } }) another way wutg inertia
+    }
+
+
 
     useEffect(() => {
         fetchShipments();
@@ -366,7 +383,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                             </Popover>
                         </div>
                         <div className="lg:w-2/12 w-full text-inherit">
-                            <Button variant={"default"} onClick={fetchShipments} className="w-full" disabled={isButtonDisabled()}>Terapkan</Button>
+                            <Button variant={"default"} onClick={pushUrl} className="w-full" disabled={isButtonDisabled()}>Terapkan</Button>
                         </div>
                     </div>
 

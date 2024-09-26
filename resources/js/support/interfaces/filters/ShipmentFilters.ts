@@ -4,6 +4,6 @@ export interface ShipmentFilters extends ServiceFilterOptions{
   query?: string,
   suppliers?: (string|number)[],
   rawGoodTypes?: (string|number)[],
-  start_created_at?: string|Date,
-  end_created_at?: string|Date,
+  start_created_at?: string,
+  end_created_at?: string,
 }
