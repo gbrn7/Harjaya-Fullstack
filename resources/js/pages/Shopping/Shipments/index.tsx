@@ -35,11 +35,10 @@ import {
     PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Input } from "@/components/ui/input";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { User } from "@/support/models/Index";
 import { PaginateResponse } from "@/support/interfaces/others/PaginateResponse";
 import { ShipmentResource } from "@/support/interfaces/resources/ShipmentResource";
-import { ServiceFilterOptions } from "@/support/interfaces/others/ServiceFilterOptions";
 import { shipmentService } from "@/services/shipmentService";
 import { ScaleLoader } from "react-spinners";
 import { useTheme } from "@/components/theme-provider";
@@ -66,7 +65,12 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
 
     const [shipmentResponse, setShipmentResponse] = useState<PaginateResponse<ShipmentResource>>();
 
+    const popoverWrapperref = useRef<HTMLDivElement>(null);
+    const popoverContentref = useRef<HTMLDivElement>(null);
+
     const [isLoading, setIsLoading] = useState(false);
+
+    const [isPopoverOpen, setisPopoverOpen] = useState(false)
 
     const { theme } = useTheme();
 
@@ -87,6 +91,11 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
         return !requiredFields.some((field) => filters[field]);
     };
 
+    const handleClickOutside = (event: MouseEvent) => {
+        if (popoverWrapperref.current && !popoverWrapperref.current.contains(event.target as Node) && popoverContentref.current && !popoverContentref.current.contains(event.target as Node)) {
+            setisPopoverOpen(false);
+        }
+    };
 
     const [date, setDate] = useState<DateRange | undefined>({
         from: undefined,
@@ -180,6 +189,10 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
             const { suppliers, rawGoodTypes, ...rest } = current
             return rest
         })
+
+        setisPopoverOpen(!isPopoverOpen)
+
+        fetchShipments()
     }
 
     useEffect(() => {
@@ -196,6 +209,13 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
             )
         }
     }, [date]);
+
+    useEffect(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     return (
         <AuthenticatedLayout
@@ -243,12 +263,12 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                 />
                             </div>
                         </div>
-                        <div className="popover-wrapper border-2 rounded-md w-full lg:w-2/12 text-inherit">
-                            <Popover>
+                        <div ref={popoverWrapperref} className="popover-wrapper border-2 rounded-md w-full lg:w-2/12 text-inherit" >
+                            <Popover open={isPopoverOpen}>
                                 <PopoverTrigger asChild>
-                                    <Button variant="outline" className="rounded-md justify-between border-none w-full hover:bg-transparent"><span className="text-muted-foreground text-md font-medium flex items-center"><SlidersHorizontal className="h-4 w-4 me-2" />Filter Data</span> <ChevronDown className="h-4 w-4 opacity-50" /></Button>
+                                    <Button onClick={() => setisPopoverOpen(!isPopoverOpen)} variant="outline" className="rounded-md justify-between border-none w-full hover:bg-transparent"><span className="text-muted-foreground text-md font-medium flex items-center"><SlidersHorizontal className="h-4 w-4 me-2" />Filter Data</span> <ChevronDown className="h-4 w-4 opacity-50" /></Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="lg:w-[38rem] md:w-[30rem] w-[25rem]">
+                                <PopoverContent ref={popoverContentref} className="lg:w-[38rem] md:w-[30rem] w-[25rem]" id="">
                                     <div className="h-72 overflow-auto p-2 space-y-3">
                                         <div className="header-wrapper space-y-2 lg:space-y-2">
                                             <h4 className="text-md leading-none">Filter Data</h4>
@@ -305,7 +325,6 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
 
                                 </PopoverContent>
                             </Popover>
-
                         </div>
                         <div className="overflow-hidden w-full lg:w-2/12 text-inherit">
                             <Popover>
@@ -317,7 +336,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                             "border-2 flex justify-between items-center font-normal w-full hover:bg-transparent rounded-md"
                                         }
                                     >
-                                        <div className="content-wrapper flex items-center">
+                                        <div className="content-wrapper w-10/12 overflow-hidden flex items-center">
                                             <CalendarIcon className="mr-2 text-muted-foreground h-4 w-4" />
                                             {date?.from && date?.to ? (
                                                 <span className="text-sm">
@@ -328,7 +347,10 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                                 <span className="text-muted-foreground text-md font-medium">Rentang Tanggal</span>
                                             )}
                                         </div>
-                                        {date?.from && date?.to && <X className="h-4 w-4" onClick={handleClearDate} />}
+
+                                        {date?.from && date?.to && (<div className="w-2/12">
+                                            <X className="h-4 w-4 ms-auto" onClick={handleClearDate} />
+                                        </div>)}
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="end">
