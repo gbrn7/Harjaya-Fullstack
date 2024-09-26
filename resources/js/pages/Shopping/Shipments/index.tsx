@@ -84,9 +84,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
             'end_created_at',
         ];
 
-        return !requiredFields.some(
-            (field) => !filters[field] || (Array.isArray(filters[field]) && filters[field]?.length === 0)
-        );
+        return !requiredFields.some((field) => filters[field]);
     };
 
 
@@ -98,17 +96,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     async function fetchShipments() {
         try {
             setIsLoading(true)
-            let finalFilters = { ...filters }
-
-            if (finalFilters.query) {
-                finalFilters = { ...filters, [filters.type || "id"]: filters.query }
-                delete finalFilters["type"]
-                delete finalFilters["query"]
-            }
-
-            console.log("Final filters")
-            console.log(finalFilters)
-            const res = await shipmentService.getAll(finalFilters)
+            const res = await shipmentService.getAll(filters)
             setShipmentResponse(res);
             setIsLoading(false)
         } catch (error) {
@@ -187,9 +175,16 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
         })
     }
 
+    const handleClearCheckbox = () => {
+        setFilters((current) => {
+            const { suppliers, rawGoodTypes, ...rest } = current
+            return rest
+        })
+    }
+
     useEffect(() => {
         fetchShipments();
-    }, [filters]);
+    }, []);
 
     useEffect(() => {
         if (date?.from && date?.to) {
@@ -222,7 +217,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                         <div className="search-bar-filter-wrapper w-full lg:w-6/12 lg:flex text-inherit">
 
                             <div className="wrapper border-2 w-full lg:w-1/3 rounded-t-md lg:rounded-l-md lg:rounded-r-none ">
-                                <Select defaultValue={filters?.type} onValueChange={(e) => setFilters({
+                                <Select defaultValue={filters?.type} value={filters?.type} onValueChange={(e) => setFilters({
                                     ...filters,
                                     type: e.valueOf()
                                 })}>
@@ -262,8 +257,8 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                                     Pilih supplier atau jenis barang untuk menyaring data
                                                 </p>
                                                 <div className="action-btn-wrapper flex lg:justify-end gap-2 w-2/6">
-                                                    <Button variant={"outline"} >Clear</Button>
-                                                    <Button variant={"default"} >Add Filter</Button>
+                                                    <Button variant={"outline"} onClick={handleClearCheckbox}>Clear</Button>
+                                                    <Button variant={"default"} onClick={fetchShipments}>Add Filter</Button>
                                                 </div>
                                             </div>
                                         </div>
