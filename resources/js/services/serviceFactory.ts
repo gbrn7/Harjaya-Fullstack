@@ -5,7 +5,7 @@ import { Resource } from "@/support/interfaces/resources/Resource";
 
 export function serviceFactory<T extends Resource>(baseRoute:string){
     return {
-      getAll: async (filters:ServiceFilterOptions): Promise<PaginateResponse<T>> => {
+      getAll: async (filters:any): Promise<PaginateResponse<T>> => {
         const url = route(`${baseRoute}.index`)
 
         try {

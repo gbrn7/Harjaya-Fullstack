@@ -34,7 +34,6 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/components/ui/pagination";
-import { buildUrl } from 'build-url-ts';
 import { Input } from "@/components/ui/input";
 import { useEffect, useRef, useState } from "react";
 import { User } from "@/support/models/Index";
@@ -87,7 +86,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
         const requiredFields: (keyof ShipmentFilters)[] = [
             'query',
             'suppliers',
-            'rawGoodTypes',
+            'raw_good_types_id',
             'start_created_at',
             'end_created_at',
         ];
@@ -109,6 +108,8 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     async function fetchShipments() {
         try {
             setIsLoading(true)
+            console.log("fetch filter")
+            console.log(filters)
             const res = await shipmentService.getAll(filters)
             setShipmentResponse(res);
             setIsLoading(false)
@@ -116,6 +117,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
             setIsLoading(false)
         }
     }
+
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.value !== "") {
@@ -146,7 +148,6 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
 
     }
 
-
     const handleSuppliersCheckboxChange = (checked: CheckedState, supplier: Supplier) => {
         if (checked) {
             return setFilters({
@@ -167,14 +168,14 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
         if (checked) {
             return setFilters({
                 ...filters,
-                rawGoodTypes: [...(filters.rawGoodTypes || []), rawGoodType.id]
+                raw_good_types_id: [...(filters.raw_good_types_id || []), rawGoodType.id]
             })
         }
 
         return setFilters(current => {
             const newState = { ...current }
-            newState.rawGoodTypes = current?.rawGoodTypes?.filter((value) => value !== rawGoodType.id)
-            if (newState.rawGoodTypes?.length === 0) delete newState.rawGoodTypes
+            newState.raw_good_types_id = current?.raw_good_types_id?.filter((value) => value !== rawGoodType.id)
+            if (newState.raw_good_types_id?.length === 0) delete newState.raw_good_types_id
             return newState
         })
     }
@@ -190,7 +191,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
 
     const handleClearCheckbox = () => {
         setFilters((current) => {
-            const { suppliers, rawGoodTypes, ...rest } = current
+            const { suppliers, raw_good_types_id, ...rest } = current
             return rest
         })
 
@@ -199,20 +200,16 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
         fetchShipments()
     }
 
+
+
     const pushUrl = () => {
+        router.get(url.split('?')[0], { ...filters })
 
-        const newUrl = buildUrl(url, {
-            queryParams: { ...filters }
-        })
-
-        router.visit(newUrl);
-
-        // router.visit(newUrl, { data: { ...filters } }) another way wutg inertia
     }
 
 
-
     useEffect(() => {
+
         fetchShipments();
     }, []);
 
@@ -295,7 +292,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                                 </p>
                                                 <div className="action-btn-wrapper flex lg:justify-end gap-2 w-2/6">
                                                     <Button variant={"outline"} onClick={handleClearCheckbox}>Clear</Button>
-                                                    <Button variant={"default"} onClick={fetchShipments}>Add Filter</Button>
+                                                    <Button variant={"default"} onClick={pushUrl}>Add Filter</Button>
                                                 </div>
                                             </div>
                                         </div>
@@ -326,7 +323,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                                 <div className="filter-list-wrapper space-y-3  h-full overflow-hidden border border-y-0 border-gray-400 border-e-0 py-2 ps-2">
                                                     {rawGoodTypes.map((rawGoodType, index) => (
                                                         <div className="flex items-center space-x-2" key={index}>
-                                                            <Checkbox checked={filters.rawGoodTypes?.includes(rawGoodType.id) || false} id="rawGoodType" value={rawGoodType.id} onCheckedChange={(checked) => handleRawGoodsCheckboxChange(checked, rawGoodType)} />
+                                                            <Checkbox checked={filters.raw_good_types_id?.includes(rawGoodType.id) || false} id="rawGoodType" value={rawGoodType.id} onCheckedChange={(checked) => handleRawGoodsCheckboxChange(checked, rawGoodType)} />
                                                             <label
                                                                 htmlFor="terms"
                                                                 className="text-sm font-medium capitalize leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
