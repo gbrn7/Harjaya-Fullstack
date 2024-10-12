@@ -65,8 +65,8 @@ type Shipment = {
 export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
 
     const [shipmentResponse, setShipmentResponse] = useState<PaginateResponse<ShipmentResource>>();
+    const [isDisabled, setIsDisabled] = useState(true);
     const { url } = usePage();
-
 
     const popoverWrapperref = useRef<HTMLDivElement>(null);
     const popoverContentref = useRef<HTMLDivElement>(null);
@@ -201,15 +201,12 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     }
 
 
-
     const pushUrl = () => {
         router.get(url.split('?')[0], { ...filters })
 
     }
 
-
     useEffect(() => {
-
         fetchShipments();
     }, []);
 
@@ -231,6 +228,64 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
         };
     }, []);
 
+    useEffect(() => {
+        const requiredFields: (keyof ShipmentFilters)[] = [
+            'query',
+            'suppliers',
+            'raw_good_types_id',
+            'start_created_at',
+            'end_created_at',
+        ];
+
+        setIsDisabled(!requiredFields.some((field) => filters[field]))
+    }, [filters.query, filters.suppliers, filters.raw_good_types_id, filters.start_created_at, filters.end_created_at])
+
+    useEffect(() => {
+        const extracted = extractQueryParams(window.location.href);
+
+        console.log("extracted")
+        console.log(extracted)
+    }, [])
+
+    const extractQueryParams = (url: string): Record<string, string | string[]> => {
+        const parsedUrl = new URL(url);
+        const queryParams = new URLSearchParams(parsedUrl.search);
+
+        // Convert to an object
+        const paramsObject: Record<string, string | string[]> = {};
+
+        for (const [key, value] of queryParams.entries()) {
+            const arrayKeyMatch = key.match(/(.+)\[(\d+)\]/);
+
+            if (arrayKeyMatch) {
+                const baseKey = arrayKeyMatch[1];
+                const index = Number(arrayKeyMatch[2]);
+
+                if (!paramsObject[baseKey]) {
+                    paramsObject[baseKey] = [];
+                }
+
+                // Assign the value to the correct index
+                (paramsObject[baseKey] as string[])[index] = value;
+            } else {
+                paramsObject[key] = value;
+            }
+        }
+
+        // Clean up any empty slots in the arrays
+        for (const key in paramsObject) {
+            if (Array.isArray(paramsObject[key])) {
+                paramsObject[key] = (paramsObject[key] as string[]).filter(item => item !== undefined);
+            }
+        }
+
+        return paramsObject
+
+    };
+
+
+
+
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -248,9 +303,31 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                 </CardHeader>
                 <CardContent>
                     <div className="filter-wrapper space-y-3 lg:space-y-0 lg:flex items-center gap-2 text-md font-medium">
-                        <div className="search-bar-filter-wrapper w-full lg:w-6/12 lg:flex text-inherit">
+                        <div className="lg:w-1/12 w-full border-2 rounded-md">
+                            <Select defaultValue={filters.limit.toString()} value={filters.limit.toString()} onValueChange={(e) => {
+                                setFilters({
+                                    ...filters,
+                                    limit: parseInt(e.valueOf())
+                                })
 
-                            <div className="wrapper border-2 w-full lg:w-1/3 rounded-t-md lg:rounded-l-md lg:rounded-r-none ">
+                                setIsDisabled(false)
+
+                            }}>
+                                <SelectTrigger className="w-full py-0 border-none rounded-md rounded-r-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-offset-0">
+                                    <SelectValue placeholder="Data" defaultValue={10} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="10">10</SelectItem>
+                                    <SelectItem value="15">15</SelectItem>
+                                    <SelectItem value="20">20</SelectItem>
+                                    <SelectItem value="25">25</SelectItem>
+                                    <SelectItem value="30">30</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="search-bar-filter-wrapper w-full lg:w-5/12 lg:flex text-inherit">
+
+                            <div className="wrapper border-2 w-full lg:w-1/3 rounded-t-md lg:rounded-l-md lg:rounded-r-none">
                                 <Select defaultValue={filters?.type} value={filters?.type} onValueChange={(e) => setFilters({
                                     ...filters,
                                     type: e.valueOf()
@@ -380,7 +457,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                             </Popover>
                         </div>
                         <div className="lg:w-2/12 w-full text-inherit">
-                            <Button variant={"default"} onClick={pushUrl} className="w-full" disabled={isButtonDisabled()}>Terapkan</Button>
+                            <Button variant={"default"} onClick={pushUrl} className="w-full" disabled={isDisabled}>Terapkan</Button>
                         </div>
                     </div>
 
