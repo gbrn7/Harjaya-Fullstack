@@ -4,8 +4,70 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "73bb13e81ab84f98e67b2e1a9b23044e",
+    "content-hash": "655bf54db80616b4970a4695b55e01d9",
     "packages": [
+        {
+            "name": "adobrovolsky97/laravel-repository-service-pattern",
+            "version": "v2.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/adobrovolsky97/laravel-repository-service-pattern.git",
+                "reference": "1e20f9e1f45ffb0f2f2d1f41f5dfa484c1ba2d23"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/adobrovolsky97/laravel-repository-service-pattern/zipball/1e20f9e1f45ffb0f2f2d1f41f5dfa484c1ba2d23",
+                "reference": "1e20f9e1f45ffb0f2f2d1f41f5dfa484c1ba2d23",
+                "shasum": ""
+            },
+            "require": {
+                "laravel/framework": "^8.37|^9.0|^10.0|^11.0",
+                "php": ">=7.2"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^7.20",
+                "phpunit/phpunit": "^9.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Adobrovolsky97\\LaravelRepositoryServicePattern\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Andrew Dobrovolsky",
+                    "email": "adobrovolsky97@gmail.com"
+                }
+            ],
+            "description": "Laravel 5|6|7|8|9|10 - Repository - Service Pattern",
+            "keywords": [
+                "Laravel Repository",
+                "base repository",
+                "base service",
+                "cache",
+                "code generator",
+                "eloquent",
+                "laravel",
+                "laravel boilerplate",
+                "laravel service",
+                "laravel service and repository",
+                "laravel skeleton",
+                "model",
+                "repository",
+                "service",
+                "service and repository"
+            ],
+            "support": {
+                "issues": "https://github.com/adobrovolsky97/laravel-repository-service-pattern/issues",
+                "source": "https://github.com/adobrovolsky97/laravel-repository-service-pattern/tree/v2.1"
+            },
+            "time": "2024-03-25T14:53:10+00:00"
+        },
         {
             "name": "brick/math",
             "version": "0.12.1",
