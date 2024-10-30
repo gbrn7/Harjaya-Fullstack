@@ -63,10 +63,11 @@ type Shipment = {
 }
 
 export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
-
     const [shipmentResponse, setShipmentResponse] = useState<PaginateResponse<ShipmentResource>>();
     const [isDisabled, setIsDisabled] = useState(true);
     const { url } = usePage();
+    let isNeedUpdate: Boolean = true;
+
 
     const popoverWrapperref = useRef<HTMLDivElement>(null);
     const popoverContentref = useRef<HTMLDivElement>(null);
@@ -82,17 +83,6 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
         limit: 10,
     });
 
-    const isButtonDisabled = (): boolean => {
-        const requiredFields: (keyof ShipmentFilters)[] = [
-            'query',
-            'suppliers',
-            'raw_good_types_id',
-            'start_created_at',
-            'end_created_at',
-        ];
-
-        return !requiredFields.some((field) => filters[field]);
-    };
 
     const handleClickOutside = (event: MouseEvent) => {
         if (popoverWrapperref.current && !popoverWrapperref.current.contains(event.target as Node) && popoverContentref.current && !popoverContentref.current.contains(event.target as Node)) {
@@ -182,11 +172,6 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
 
     const handleClearDate = () => {
         setDate({ ...date, to: undefined, from: undefined })
-        setFilters((current) => {
-            const { start_created_at, end_created_at, ...rest } = current
-
-            return rest
-        })
     }
 
     const handleClearCheckbox = () => {
@@ -207,18 +192,24 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     }
 
     useEffect(() => {
-        fetchShipments();
-    }, []);
+        if (isNeedUpdate) {
+            if (date?.from && date?.to) {
+                setFilters({
+                    ...filters,
+                    start_created_at: date.from.toISOString(),
+                    end_created_at: date.to.toISOString()
+                }
+                )
+            } else if (date?.from === undefined && date?.to === undefined) {
+                setFilters((current) => {
+                    const { start_created_at, end_created_at, ...rest } = current
 
-    useEffect(() => {
-        if (date?.from && date?.to) {
-            setFilters({
-                ...filters,
-                start_created_at: date.from.toISOString(),
-                end_created_at: date.to.toISOString()
+                    return rest
+                })
             }
-            )
         }
+
+        isNeedUpdate = true
     }, [date]);
 
     useEffect(() => {
@@ -241,21 +232,41 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     }, [filters.query, filters.suppliers, filters.raw_good_types_id, filters.start_created_at, filters.end_created_at])
 
     useEffect(() => {
-        const extracted = extractQueryParams(window.location.href);
+        const extracted: Record<string, string | string[] | number | number[]> = extractQueryParams(window.location.href);
 
-        console.log("extracted")
+        console.log('Extracted')
         console.log(extracted)
-    }, [])
 
-    const extractQueryParams = (url: string): Record<string, string | string[]> => {
+        const { start_created_at, end_created_at } = extracted;
+
+        if (start_created_at && end_created_at) {
+            isNeedUpdate = false
+            setDate({ from: new Date(start_created_at.toString()), to: new Date(end_created_at.toString()) })
+        }
+
+        setFilters(prevState => ({
+            ...prevState,
+            ...extracted
+        }))
+    }, []);
+
+    useEffect(() => {
+        fetchShipments();
+    }, [filters]);
+
+
+    const extractQueryParams = (url: string): Record<string, string | string[] | number | number[]> => {
         const parsedUrl = new URL(url);
         const queryParams = new URLSearchParams(parsedUrl.search);
 
         // Convert to an object
-        const paramsObject: Record<string, string | string[]> = {};
+        const paramsObject: Record<string, string | string[] | number | number[]> = {};
 
         for (const [key, value] of queryParams.entries()) {
             const arrayKeyMatch = key.match(/(.+)\[(\d+)\]/);
+
+            const parsedValue = !isNaN(Number(value)) ? Number(value) : value; // Convert numeric strings to numbers
+
 
             if (arrayKeyMatch) {
                 const baseKey = arrayKeyMatch[1];
@@ -266,9 +277,9 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                 }
 
                 // Assign the value to the correct index
-                (paramsObject[baseKey] as string[])[index] = value;
+                (paramsObject[baseKey] as (string | number)[])[index] = parsedValue;
             } else {
-                paramsObject[key] = value;
+                paramsObject[key] = parsedValue;
             }
         }
 
@@ -282,8 +293,6 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
         return paramsObject
 
     };
-
-
 
 
     return (

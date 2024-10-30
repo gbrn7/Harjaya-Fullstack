@@ -1,3 +1,4 @@
+import { DateRange } from "react-day-picker";
 import { ServiceFilterOptions } from "../others/ServiceFilterOptions";
 export interface ShipmentFilters extends ServiceFilterOptions{
   type?: string,
@@ -5,5 +6,4 @@ export interface ShipmentFilters extends ServiceFilterOptions{
   suppliers?: (string|number)[],
   raw_good_types_id?: (string|number)[],
   start_created_at?: string,
-  end_created_at?: string,
-}
+  end_created_at?: string
