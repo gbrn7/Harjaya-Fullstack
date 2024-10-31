@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Shopping;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Requests\Shipment\ShipmentRequest;
-use App\Http\Resources\Resources\ShipmentResource;
+use App\Http\Resources\ShipmentResource;
 use App\Models\Raw_Goods_Type;
 use App\Models\Shipment;
 use App\Models\Supplier;

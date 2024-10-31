@@ -252,7 +252,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
 
     useEffect(() => {
         fetchShipments();
-    }, [filters]);
+    }, []);
 
 
     const extractQueryParams = (url: string): Record<string, string | string[] | number | number[]> => {
@@ -428,31 +428,34 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                         </div>
                         <div className="overflow-hidden w-full lg:w-2/12 text-inherit">
                             <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        id="date"
-                                        variant={"outline"}
-                                        className={
-                                            "border-2 flex justify-between items-center font-normal w-full hover:bg-transparent rounded-md"
-                                        }
-                                    >
-                                        <div className="content-wrapper w-10/12 overflow-hidden flex items-center">
-                                            <CalendarIcon className="mr-2 text-muted-foreground h-4 w-4" />
-                                            {date?.from && date?.to ? (
-                                                <span className="text-sm">
-                                                    {format(date.from, "dd/LL/y")} -{" "}
-                                                    {format(date.to, "dd/LL/y")}
-                                                </span>
-                                            ) : (
-                                                <span className="text-muted-foreground text-md font-medium">Rentang Tanggal</span>
-                                            )}
-                                        </div>
+                                <div className="flex  items-center border-2 rounded-md">
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            id="date"
+                                            variant={"outline"}
+                                            className={
+                                                "border-0 flex w-10/12 justify-between items-center font-normal hover:bg-transparent rounded-md"
+                                            }
+                                        >
+                                            <div className="content-wrapper overflow-hidden flex items-center">
+                                                <CalendarIcon className="mr-2 text-muted-foreground h-4 w-4" />
+                                                {date?.from && date?.to ? (
+                                                    <span className="text-sm">
+                                                        {format(date.from, "dd/LL/y")} -{" "}
+                                                        {format(date.to, "dd/LL/y")}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-muted-foreground text-md font-medium">Rentang Tanggal</span>
+                                                )}
+                                            </div>
 
-                                        {date?.from && date?.to && (<div className="w-2/12">
-                                            <X className="h-4 w-4 ms-auto" onClick={handleClearDate} />
-                                        </div>)}
-                                    </Button>
-                                </PopoverTrigger>
+                                        </Button>
+                                    </PopoverTrigger>
+
+                                    {date?.from && date?.to && (<div className="w-2/12 flex justify-center items-center">
+                                        <X className="h-4 w-4" onClick={handleClearDate} />
+                                    </div>)}
+                                </div>
                                 <PopoverContent className="w-auto p-0" align="end">
                                     <Calendar
                                         initialFocus
@@ -463,6 +466,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                         numberOfMonths={2}
                                     />
                                 </PopoverContent>
+
                             </Popover>
                         </div>
                         <div className="lg:w-2/12 w-full text-inherit">

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Resources\Resources;
+namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -18,7 +18,7 @@ class ShipmentResource extends JsonResource
 
         return [
             "id" => $this->id,
-            "supplier" => $this->supplier,
+            "supplier" => SupplierResource::make($this->supplier),
             "warehouse_num" => $this->warehouse_num,
             "plat_number" => $this->plat_number,
             "driver_name" => $this->driver_name,
