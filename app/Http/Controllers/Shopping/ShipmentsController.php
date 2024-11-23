@@ -23,8 +23,11 @@ class ShipmentsController extends Controller
     public function index(ShipmentRequest $request)
     {
         if (!request()->inertia() && request()->expectsJson()) {
-
-            return ShipmentResource::collection($this->service->withTrashed()->getAllPaginated($request->validated(), 25));
+            if ($request->has(['type', 'query'])) {
+                $request->merge([$request->get("type") => $request->get("query")]);
+                $request->replace($request->except(['type', 'query']));
+            }
+            return ShipmentResource::collection($this->service->getAllPaginated($request->query(), $request->limit));
         }
 
         $suppliers = Supplier::latest()->get();

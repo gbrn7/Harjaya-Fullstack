@@ -68,13 +68,14 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     const { url } = usePage();
     let isNeedUpdate: Boolean = true;
 
-
     const popoverWrapperref = useRef<HTMLDivElement>(null);
     const popoverContentref = useRef<HTMLDivElement>(null);
 
     const [isLoading, setIsLoading] = useState(false);
 
-    const [isPopoverOpen, setisPopoverOpen] = useState(false)
+    const [isPopoverOpen, setisPopoverOpen] = useState(false);
+
+    const [extractedParams, setExtractedParams] = useState<Record<string, string | string[] | number | number[]>>();
 
     const { theme } = useTheme();
 
@@ -82,6 +83,8 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
         page: 1,
         limit: 10,
     });
+
+
 
 
     const handleClickOutside = (event: MouseEvent) => {
@@ -95,12 +98,20 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
         to: undefined,
     })
 
+    const handleClickPagination = (page: number) => {
+        const newPageFilter = { ...filters, page: page }
+        setFilters({ ...filters, page: page })
+        pushUrl(newPageFilter);
+    }
+
     async function fetchShipments() {
         try {
             setIsLoading(true)
             console.log("fetch filter")
             console.log(filters)
             const res = await shipmentService.getAll(filters)
+            console.log("res");
+            console.log(res);
             setShipmentResponse(res);
             setIsLoading(false)
         } catch (error) {
@@ -132,7 +143,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
         }
 
         setFilters(current => {
-            const { query, type, ...rest } = current;
+            const { query, ...rest } = current;
             return rest;
         })
 
@@ -142,14 +153,14 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
         if (checked) {
             return setFilters({
                 ...filters,
-                suppliers: [...(filters.suppliers || []), supplier.id]
+                suppliers_id: [...(filters.suppliers_id || []), supplier.id]
             })
         }
 
         return setFilters(current => {
             const newState = { ...current }
-            newState.suppliers = current?.suppliers?.filter((value) => value !== supplier.id)
-            if (newState.suppliers?.length === 0) delete newState.suppliers
+            newState.suppliers_id = current?.suppliers_id?.filter((value) => value !== supplier.id)
+            if (newState.suppliers_id?.length === 0) delete newState.suppliers_id
             return newState
         })
     }
@@ -171,24 +182,28 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     }
 
     const handleClearDate = () => {
+        const { start_created_at, end_created_at, ...rest } = filters
         setDate({ ...date, to: undefined, from: undefined })
+
+        pushUrl(rest);
     }
 
     const handleClearCheckbox = () => {
+        const { suppliers_id, raw_good_types_id, ...rest } = filters;
         setFilters((current) => {
-            const { suppliers, raw_good_types_id, ...rest } = current
+            const { suppliers_id, raw_good_types_id, ...rest } = current
             return rest
         })
 
         setisPopoverOpen(!isPopoverOpen)
-
-        fetchShipments()
+        pushUrl(rest);
     }
 
 
-    const pushUrl = () => {
-        router.get(url.split('?')[0], { ...filters })
+    const pushUrl = (filters: ShipmentFilters) => {
+        router.get(url.split('?')[0], { ...filters }, { preserveState: true });
 
+        fetchShipments();
     }
 
     useEffect(() => {
@@ -203,7 +218,6 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
             } else if (date?.from === undefined && date?.to === undefined) {
                 setFilters((current) => {
                     const { start_created_at, end_created_at, ...rest } = current
-
                     return rest
                 })
             }
@@ -222,20 +236,25 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     useEffect(() => {
         const requiredFields: (keyof ShipmentFilters)[] = [
             'query',
-            'suppliers',
+            'suppliers_id',
             'raw_good_types_id',
             'start_created_at',
             'end_created_at',
         ];
 
-        setIsDisabled(!requiredFields.some((field) => filters[field]))
-    }, [filters.query, filters.suppliers, filters.raw_good_types_id, filters.start_created_at, filters.end_created_at])
+        let isDisable = !requiredFields.some((field) => filters[field]);
+
+        if (extractedParams?.query) {
+            isDisable = false
+        }
+
+        setIsDisabled(isDisable)
+    }, [filters.query, filters.suppliers_id, filters.raw_good_types_id, filters.start_created_at, filters.end_created_at])
 
     useEffect(() => {
         const extracted: Record<string, string | string[] | number | number[]> = extractQueryParams(window.location.href);
 
-        console.log('Extracted')
-        console.log(extracted)
+        setExtractedParams(extracted);
 
         const { start_created_at, end_created_at } = extracted;
 
@@ -248,6 +267,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
             ...prevState,
             ...extracted
         }))
+
     }, []);
 
     useEffect(() => {
@@ -347,7 +367,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                     <SelectContent>
                                         <SelectGroup>
                                             <SelectItem value="id">ID</SelectItem>
-                                            <SelectItem value="driver">Driver</SelectItem>
+                                            <SelectItem value="driver_name">Driver</SelectItem>
                                             <SelectItem value="plat_number">Nomor Plat</SelectItem>
                                         </SelectGroup>
                                     </SelectContent>
@@ -377,8 +397,8 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                                     Pilih supplier atau jenis barang untuk menyaring data
                                                 </p>
                                                 <div className="action-btn-wrapper flex lg:justify-end gap-2 w-2/6">
-                                                    <Button variant={"outline"} onClick={handleClearCheckbox}>Clear</Button>
-                                                    <Button variant={"default"} onClick={pushUrl}>Add Filter</Button>
+                                                    <Button variant={"outline"} disabled={filters?.suppliers_id || filters?.raw_good_types_id ? true : false} onClick={handleClearCheckbox}>Clear</Button>
+                                                    <Button variant={"default"} onClick={() => pushUrl(filters)}>Add Filter</Button>
                                                 </div>
                                             </div>
                                         </div>
@@ -390,7 +410,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                                 <div className="filter-list-wrapper space-y-3  overflow-hidden py-2">
                                                     {suppliers.map((supplier, index) => (
                                                         <div className="flex items-center space-x-2" key={index} >
-                                                            <Checkbox checked={filters?.suppliers?.includes(supplier.id) || false} id="suppliers" value={supplier.id} onCheckedChange={(checked) => handleSuppliersCheckboxChange(checked, supplier)} />
+                                                            <Checkbox checked={filters?.suppliers_id?.includes(supplier.id) || false} id="suppliers" value={supplier.id} onCheckedChange={(checked) => handleSuppliersCheckboxChange(checked, supplier)} />
                                                             <label
                                                                 htmlFor="suppliers"
                                                                 className="text-sm font-medium capitalize leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -438,14 +458,17 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                             }
                                         >
                                             <div className="content-wrapper overflow-hidden flex items-center">
-                                                <CalendarIcon className="mr-2 text-muted-foreground h-4 w-4" />
                                                 {date?.from && date?.to ? (
                                                     <span className="text-sm">
                                                         {format(date.from, "dd/LL/y")} -{" "}
                                                         {format(date.to, "dd/LL/y")}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-muted-foreground text-md font-medium">Rentang Tanggal</span>
+                                                    <>
+                                                        <CalendarIcon className="mr-2 text-muted-foreground h-4 w-4" />
+
+                                                        <span className="text-muted-foreground text-md font-medium">Rentang Tanggal</span>
+                                                    </>
                                                 )}
                                             </div>
 
@@ -469,8 +492,8 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
 
                             </Popover>
                         </div>
-                        <div className="lg:w-2/12 w-full text-inherit">
-                            <Button variant={"default"} onClick={pushUrl} className="w-full" disabled={isDisabled}>Terapkan</Button>
+                        <div className="lg:w-2/12 w-full text-inherit flex gap-1">
+                            <Button variant={"default"} onClick={() => pushUrl(filters)} className="w-full" disabled={isDisabled}>Terapkan</Button>
                         </div>
                     </div>
 
@@ -513,7 +536,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                             </div>
                                         </TableCell>
                                     </TableRow>
-                                ) : shipmentResponse?.data.length ? (
+                                ) : shipmentResponse?.data ? (
                                     shipmentResponse?.data?.map((shipment, index) => (
                                         <TableRow key={index} className="font-medium">
                                             <TableCell className="hidden md:table-cell">
@@ -571,36 +594,39 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                         </TableBody>
                     </Table>
                 </CardContent>
-                <CardFooter>
-                    <div className="text-xs text-muted-foreground">
-                        Showing <strong>1-10</strong> of <strong>32</strong>{" "}
-                        products
-                    </div>
-                    <Pagination className="justify-end">
-                        <PaginationContent>
-                            <PaginationItem>
-                                <PaginationPrevious href="#" />
-                            </PaginationItem>
-                            <PaginationItem>
-                                <PaginationLink href="#">1</PaginationLink>
-                            </PaginationItem>
-                            <PaginationItem>
-                                <PaginationLink href="#" isActive>
-                                    2
-                                </PaginationLink>
-                            </PaginationItem>
-                            <PaginationItem>
-                                <PaginationLink href="#">3</PaginationLink>
-                            </PaginationItem>
-                            <PaginationItem>
-                                <PaginationEllipsis />
-                            </PaginationItem>
-                            <PaginationItem>
-                                <PaginationNext href="#" />
-                            </PaginationItem>
-                        </PaginationContent>
-                    </Pagination>
-                </CardFooter>
+                {
+                    shipmentResponse?.links && shipmentResponse?.meta && (
+                        <CardFooter>
+                            <div className="text-xs text-muted-foreground">
+                                Showing <strong>{shipmentResponse?.meta?.from}-{shipmentResponse?.meta?.to}</strong> of <strong>{shipmentResponse?.meta.total}</strong> Data
+                            </div>
+                            <Pagination className="justify-end">
+                                <PaginationContent>
+                                    {
+                                        shipmentResponse.links?.prev && (
+                                            <PaginationItem>
+                                                <PaginationPrevious href={shipmentResponse.links.prev} />
+                                            </PaginationItem>
+                                        )
+                                    }
+                                    {shipmentResponse?.meta?.links?.map((page, index) => (
+                                        page?.url &&
+                                        <PaginationItem key={index} className="cursor-pointer">
+                                            <PaginationLink onClick={() => handleClickPagination(parseInt(page?.label))} isActive={page?.active}>{page?.label}</PaginationLink>
+                                        </PaginationItem>
+                                    ))}
+                                    {
+                                        shipmentResponse.links?.next && (
+                                            <PaginationItem>
+                                                <PaginationNext href={shipmentResponse.links.next} />
+                                            </PaginationItem>
+                                        )
+                                    }
+                                </PaginationContent>
+                            </Pagination>
+                        </CardFooter>
+                    )
+                }
             </Card>
         </AuthenticatedLayout >
     );

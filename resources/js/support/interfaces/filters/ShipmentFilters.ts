@@ -3,7 +3,8 @@ import { ServiceFilterOptions } from "../others/ServiceFilterOptions";
 export interface ShipmentFilters extends ServiceFilterOptions{
   type?: string,
   query?: string,
-  suppliers?: (string|number)[],
+  suppliers_id?: (string|number)[],
   raw_good_types_id?: (string|number)[],
   start_created_at?: string,
   end_created_at?: string
+}
