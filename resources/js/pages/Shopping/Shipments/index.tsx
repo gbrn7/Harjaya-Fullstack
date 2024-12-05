@@ -86,7 +86,6 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
 
 
 
-
     const handleClickOutside = (event: MouseEvent) => {
         if (popoverWrapperref.current && !popoverWrapperref.current.contains(event.target as Node) && popoverContentref.current && !popoverContentref.current.contains(event.target as Node)) {
             setisPopoverOpen(false);
@@ -101,24 +100,20 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     const handleClickPagination = (page: number) => {
         const newPageFilter = { ...filters, page: page }
         setFilters({ ...filters, page: page })
-        pushUrl(newPageFilter);
+        pushUrl();
     }
 
     async function fetchShipments() {
         try {
             setIsLoading(true)
-            console.log("fetch filter")
-            console.log(filters)
-            const res = await shipmentService.getAll(filters)
-            console.log("res");
-            console.log(res);
+            const extracted: Record<string, string | string[] | number | number[]> = extractQueryParams(window.location.href);
+            const res = await shipmentService.getAll(extracted)
             setShipmentResponse(res);
             setIsLoading(false)
         } catch (error) {
             setIsLoading(false)
         }
     }
-
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.value !== "") {
@@ -182,10 +177,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     }
 
     const handleClearDate = () => {
-        const { start_created_at, end_created_at, ...rest } = filters
         setDate({ ...date, to: undefined, from: undefined })
-
-        pushUrl(rest);
     }
 
     const handleClearCheckbox = () => {
@@ -196,14 +188,10 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
         })
 
         setisPopoverOpen(!isPopoverOpen)
-        pushUrl(rest);
     }
 
-
-    const pushUrl = (filters: ShipmentFilters) => {
-        router.get(url.split('?')[0], { ...filters }, { preserveState: true });
-
-        fetchShipments();
+    const pushUrl = () => {
+        router.get(url.split('?')[0], { ...filters });
     }
 
     useEffect(() => {
@@ -244,10 +232,13 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
 
         let isDisable = !requiredFields.some((field) => filters[field]);
 
-        if (extractedParams?.query) {
+
+        if (extractedParams?.query !== filters?.query) {
             isDisable = false
         }
 
+        console.log("is disable 2")
+        console.log(isDisable)
         setIsDisabled(isDisable)
     }, [filters.query, filters.suppliers_id, filters.raw_good_types_id, filters.start_created_at, filters.end_created_at])
 
@@ -267,12 +258,16 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
             ...prevState,
             ...extracted
         }))
+        console.log("use effect-1")
+
 
     }, []);
 
     useEffect(() => {
+        console.log("use effect-2")
+
         fetchShipments();
-    }, []);
+    }, [filters?.start_created_at]);
 
 
     const extractQueryParams = (url: string): Record<string, string | string[] | number | number[]> => {
@@ -333,7 +328,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                 <CardContent>
                     <div className="filter-wrapper space-y-3 lg:space-y-0 lg:flex items-center gap-2 text-md font-medium">
                         <div className="lg:w-1/12 w-full border-2 rounded-md">
-                            <Select defaultValue={filters.limit.toString()} value={filters.limit.toString()} onValueChange={(e) => {
+                            <Select defaultValue={filters?.limit?.toString()} value={filters?.limit?.toString()} onValueChange={(e) => {
                                 setFilters({
                                     ...filters,
                                     limit: parseInt(e.valueOf())
@@ -397,8 +392,8 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                                     Pilih supplier atau jenis barang untuk menyaring data
                                                 </p>
                                                 <div className="action-btn-wrapper flex lg:justify-end gap-2 w-2/6">
-                                                    <Button variant={"outline"} disabled={filters?.suppliers_id || filters?.raw_good_types_id ? true : false} onClick={handleClearCheckbox}>Clear</Button>
-                                                    <Button variant={"default"} onClick={() => pushUrl(filters)}>Add Filter</Button>
+                                                    <Button variant={"outline"} disabled={filters?.suppliers_id || filters?.raw_good_types_id ? false : true} onClick={handleClearCheckbox}>Clear</Button>
+                                                    <Button variant={"default"} onClick={() => pushUrl()}>Add Filter</Button>
                                                 </div>
                                             </div>
                                         </div>
@@ -493,106 +488,121 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                             </Popover>
                         </div>
                         <div className="lg:w-2/12 w-full text-inherit flex gap-1">
-                            <Button variant={"default"} onClick={() => pushUrl(filters)} className="w-full" disabled={isDisabled}>Terapkan</Button>
+                            <Button variant={"default"} onClick={() => pushUrl()} className="w-full" disabled={isDisabled}>Terapkan</Button>
                         </div>
                     </div>
+                    {!isLoading && extractedParams && (
+                        <div className="filters-wrapper mx-2">
+                            <div className="header flex">Total {shipmentResponse?.meta.total}</div>
+                        </div>
+                    )}
+                    {
+                        isLoading ? (
+                            <div className="loading-wrapper p-8 flex items-center justify-center">
+                                <ScaleLoader
+                                    color={
+                                        theme === "light"
+                                            ? "#09090B"
+                                            : "#F2F2F2"
+                                    }
+                                    width={7}
+                                    height={48}
 
-                    <Table className="mt-2">
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="hidden md:table-cell font-bold">ID Pengiriman</TableHead>
-                                <TableHead className="font-bold">Supplier</TableHead>
-                                <TableHead className="hidden md:table-cell font-bold">Nomor Plat</TableHead>
-                                <TableHead className="hidden md:table-cell font-bold">
-                                    Driver
-                                </TableHead>
-                                <TableHead>
-                                    Tanggal Diterima
-                                </TableHead>
-                                <TableHead className="font-bold">
-                                    Aksi
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {
-                                isLoading ? (
+                                    loading={true}
+                                    aria-label="Loading Spinner"
+                                    data-testid="loader"
+                                />
+                            </div>
+                        ) : shipmentResponse?.meta!.total! > 0 ? (
+                            <Table className="mt-2">
+                                <TableHeader>
                                     <TableRow>
-                                        <TableCell className="text-center" colSpan={6}>
-                                            <div className="wrapper">
-                                                <ScaleLoader
-                                                    color={
-                                                        theme === "light"
-                                                            ? "#09090B"
-                                                            : "#F2F2F2"
-                                                    }
-                                                    width={2}
-                                                    height={21}
-                                                    className="me-1"
-                                                    loading={true}
-                                                    aria-label="Loading Spinner"
-                                                    data-testid="loader"
-                                                />
-                                            </div>
-                                        </TableCell>
+                                        <TableHead className="hidden md:table-cell font-bold">ID Pengiriman</TableHead>
+                                        <TableHead className="font-bold">Supplier</TableHead>
+                                        <TableHead className="hidden md:table-cell font-bold">Nomor Plat</TableHead>
+                                        <TableHead className="hidden md:table-cell font-bold">
+                                            Driver
+                                        </TableHead>
+                                        <TableHead>
+                                            Tanggal Diterima
+                                        </TableHead>
+                                        <TableHead className="font-bold">
+                                            Aksi
+                                        </TableHead>
                                     </TableRow>
-                                ) : shipmentResponse?.data ? (
-                                    shipmentResponse?.data?.map((shipment, index) => (
-                                        <TableRow key={index} className="font-medium">
-                                            <TableCell className="hidden md:table-cell">
-                                                {shipment.id}
-                                            </TableCell>
-                                            <TableCell>
-                                                {shipment.supplier.name}
-                                            </TableCell>
-                                            <TableCell className="hidden md:table-cell">
-                                                {shipment.plat_number}
-                                            </TableCell>
-                                            <TableCell className="hidden md:table-cell">
-                                                {shipment.driver_name}
-                                            </TableCell>
-                                            <TableCell>
-                                                {shipment.shipment_date}
-                                            </TableCell>
-                                            <TableCell>
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button
-                                                            aria-haspopup="true"
-                                                            size="icon"
-                                                            variant="ghost"
-                                                        >
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                            <span className="sr-only">
-                                                                Toggle menu
-                                                            </span>
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuLabel>
-                                                            Aksi
-                                                        </DropdownMenuLabel>
-                                                        <DropdownMenuItem>
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem>
-                                                            Hapus
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
+                                </TableHeader>
+                                <TableBody>
+                                    {
+                                        shipmentResponse?.data?.map((shipment, index) => (
+                                            <TableRow key={index} className="font-medium">
+                                                <TableCell className="hidden md:table-cell">
+                                                    {shipment.id}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {shipment.supplier.name}
+                                                </TableCell>
+                                                <TableCell className="hidden md:table-cell">
+                                                    {shipment.plat_number}
+                                                </TableCell>
+                                                <TableCell className="hidden md:table-cell">
+                                                    {shipment.driver_name}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {shipment.shipment_date}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button
+                                                                aria-haspopup="true"
+                                                                size="icon"
+                                                                variant="ghost"
+                                                            >
+                                                                <MoreHorizontal className="h-4 w-4" />
+                                                                <span className="sr-only">
+                                                                    Toggle menu
+                                                                </span>
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            <DropdownMenuLabel>
+                                                                Aksi
+                                                            </DropdownMenuLabel>
+                                                            <DropdownMenuItem>
+                                                                Edit
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem>
+                                                                Hapus
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    }
+                                </TableBody>
+                            </Table>
+                        ) : (<div className="flex flex-col items-center justify-center mx-3">
+                            <div className="img-wrapper w-1/12">
+                                {theme == "light" ? (
+                                    <img
+                                        src="/images/Light-Mode-Empty-Data.png"
+                                        alt="image"
+                                        className="w-full h-full opacity-70"
+                                    />
                                 ) : (
-                                    <TableRow>
-                                        <TableCell className="text-center text-md" colSpan={6}>
-                                            Data Tidak Ditemukan
-                                        </TableCell>
-                                    </TableRow>
-                                )
-                            }
-                        </TableBody>
-                    </Table>
+                                    <img
+                                        src="/images/Dark-Mode-Empty-Data.png"
+                                        alt="image"
+                                        className="w-full h-full opacity-70"
+                                    />
+                                )}
+
+                            </div>
+                            <p className="text-sm text-primary">Data tidak ditemukan</p>
+
+                        </div>)
+                    }
                 </CardContent>
                 {
                     shipmentResponse?.links && shipmentResponse?.meta && (

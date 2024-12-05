@@ -27,7 +27,9 @@ class ShipmentsController extends Controller
                 $request->merge([$request->get("type") => $request->get("query")]);
                 $request->replace($request->except(['type', 'query']));
             }
-            return ShipmentResource::collection($this->service->getAllPaginated($request->query(), $request->limit));
+
+
+            return ShipmentResource::collection($this->service->getAllPaginated($request->query(), $request->limit ? $request->limit : 10));
         }
 
         $suppliers = Supplier::latest()->get();

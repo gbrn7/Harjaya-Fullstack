@@ -7,6 +7,6 @@ export interface PaginateMeta {
   path: string,
   per_page: number,
   to: number,
-  total: number,
+  total: number, 
   links: PaginateMetaLink[]
 }
