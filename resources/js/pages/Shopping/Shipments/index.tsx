@@ -66,7 +66,6 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     const [shipmentResponse, setShipmentResponse] = useState<PaginateResponse<ShipmentResource>>();
     const [isDisabled, setIsDisabled] = useState(true);
     const { url } = usePage();
-    let isNeedUpdate: Boolean = true;
 
     const popoverWrapperref = useRef<HTMLDivElement>(null);
     const popoverContentref = useRef<HTMLDivElement>(null);
@@ -113,6 +112,10 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
         } catch (error) {
             setIsLoading(false)
         }
+    }
+
+    const handleClearAllFilter = () => {
+        router.get(url.split('?')[0]);
     }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,17 +180,15 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     }
 
     const handleClearDate = () => {
-        setDate({ ...date, to: undefined, from: undefined })
+        const { start_created_at, end_created_at, ...restFilters } = filters;
+
+        router.get(url.split('?')[0], { ...restFilters });
     }
 
     const handleClearCheckbox = () => {
-        const { suppliers_id, raw_good_types_id, ...rest } = filters;
-        setFilters((current) => {
-            const { suppliers_id, raw_good_types_id, ...rest } = current
-            return rest
-        })
+        const { raw_good_types_id, suppliers_id, ...restFilters } = filters;
 
-        setisPopoverOpen(!isPopoverOpen)
+        router.get(url.split('?')[0], { ...restFilters });
     }
 
     const pushUrl = () => {
@@ -195,23 +196,21 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     }
 
     useEffect(() => {
-        if (isNeedUpdate) {
-            if (date?.from && date?.to) {
-                setFilters({
-                    ...filters,
-                    start_created_at: date.from.toISOString(),
-                    end_created_at: date.to.toISOString()
-                }
-                )
-            } else if (date?.from === undefined && date?.to === undefined) {
-                setFilters((current) => {
-                    const { start_created_at, end_created_at, ...rest } = current
-                    return rest
-                })
+
+        if (date?.from && date?.to) {
+            setFilters({
+                ...filters,
+                start_created_at: date.from.toISOString(),
+                end_created_at: date.to.toISOString()
             }
+            )
+        } else if (date?.from === undefined && date?.to === undefined) {
+            setFilters((current) => {
+                const { start_created_at, end_created_at, ...rest } = current
+                return rest
+            })
         }
 
-        isNeedUpdate = true
     }, [date]);
 
     useEffect(() => {
@@ -237,8 +236,6 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
             isDisable = false
         }
 
-        console.log("is disable 2")
-        console.log(isDisable)
         setIsDisabled(isDisable)
     }, [filters.query, filters.suppliers_id, filters.raw_good_types_id, filters.start_created_at, filters.end_created_at])
 
@@ -250,7 +247,6 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
         const { start_created_at, end_created_at } = extracted;
 
         if (start_created_at && end_created_at) {
-            isNeedUpdate = false
             setDate({ from: new Date(start_created_at.toString()), to: new Date(end_created_at.toString()) })
         }
 
@@ -258,16 +254,13 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
             ...prevState,
             ...extracted
         }))
-        console.log("use effect-1")
 
 
     }, []);
 
     useEffect(() => {
-        console.log("use effect-2")
-
         fetchShipments();
-    }, [filters?.start_created_at]);
+    }, []);
 
 
     const extractQueryParams = (url: string): Record<string, string | string[] | number | number[]> => {
@@ -491,9 +484,11 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                             <Button variant={"default"} onClick={() => pushUrl()} className="w-full" disabled={isDisabled}>Terapkan</Button>
                         </div>
                     </div>
-                    {!isLoading && extractedParams && (
-                        <div className="filters-wrapper mx-2">
-                            <div className="header flex">Total {shipmentResponse?.meta.total}</div>
+                    {!isLoading && window.location.search.length > 0 && (
+                        <div className="filters-wrapper p-3">
+                            <div className="header flex gap-2 text-sm"><p>Total {shipmentResponse?.meta.total} data</p> |
+                                <p className="hover:cursor-pointer hover:underline" onClick={() => handleClearAllFilter()}>Clear Filter</p>
+                            </div>
                         </div>
                     )}
                     {
