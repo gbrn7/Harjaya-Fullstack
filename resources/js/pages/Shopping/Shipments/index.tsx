@@ -96,7 +96,13 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     })
 
     const handleClickPagination = (page: number) => {
-        setFilters({ ...filters, page: page })
+        let clonnedFilters = { ...filters }
+        if (page === 1) {
+            delete clonnedFilters.page
+        } else {
+            clonnedFilters.page = page
+        }
+        router.get(url.split('?')[0], { ...clonnedFilters });
     }
 
     async function fetchShipments() {
@@ -193,7 +199,6 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     }
 
     useEffect(() => {
-
         if (date?.from && date?.to) {
             setFilters({
                 ...filters,
@@ -251,15 +256,11 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
             ...prevState,
             ...extracted
         }))
-
-
     }, []);
 
     useEffect(() => {
         fetchShipments();
     }, []);
-
-
 
     const extractQueryParams = (url: string): Record<string, string | string[] | number | number[]> => {
         const parsedUrl = new URL(url);
@@ -299,7 +300,6 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
         return paramsObject
 
     };
-
 
     return (
         <AuthenticatedLayout
@@ -341,7 +341,6 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                             </Select>
                         </div>
                         <div className="search-bar-filter-wrapper w-full lg:w-5/12 lg:flex text-inherit">
-
                             <div className="wrapper border-2 w-full lg:w-1/3 rounded-t-md lg:rounded-l-md lg:rounded-r-none">
                                 <Select defaultValue={filters?.type} value={filters?.type} onValueChange={(e) => setFilters({
                                     ...filters,
@@ -599,39 +598,15 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
 
                 {
                     shipmentResponse?.links && shipmentResponse?.meta && (
-                        <CardFooter>
-                            <div className="text-xs text-muted-foreground">
-                                Showing <strong>{shipmentResponse?.meta?.from}-{shipmentResponse?.meta?.to}</strong> of <strong>{shipmentResponse?.meta.total}</strong> Data
+                        <CardFooter className="flex flex-col lg:flex-row gap-4">
+                            <div className="text-xs text-muted-foreground lg:w-1/4 text-center lg:text-start">
+                                <p>Menampilkan <strong>{shipmentResponse?.meta?.from}-{shipmentResponse?.meta?.to}</strong></p>
+                                <p>dari <strong>{shipmentResponse?.meta.total}</strong> Data</p>
                             </div>
                             <Pagination className="justify-end">
                                 {
-                                    <GenericPagination links={shipmentResponse?.links} meta={shipmentResponse?.meta} elipsisLimit={2} clickAction={() => console.log('first')} className="justify-end" />
+                                    <GenericPagination links={shipmentResponse?.links} meta={shipmentResponse?.meta} elipsisLimit={2} clickAction={(page) => handleClickPagination(page)} className="lg:justify-end" />
                                 }
-                                {/* <PaginationContent>
-                                    {
-                                        shipmentResponse.links?.prev && (
-                                            <PaginationItem>
-                                                <PaginationPrevious href={shipmentResponse.links.prev} />
-                                            </PaginationItem>
-                                        )
-                                    }
-
-                                    {
-                                        shipmentResponse?.meta?.links?.map((page, index) => (
-                                            page?.url && !isNaN(parseInt(page?.label)) &&
-                                            <PaginationItem key={index} className="cursor-pointer">
-                                                <PaginationLink onClick={() => handleClickPagination(parseInt(page?.label))} isActive={page?.active}>{page?.label}</PaginationLink>
-                                            </PaginationItem>
-                                        ))
-                                    }
-                                    {
-                                        shipmentResponse.links?.next && (
-                                            <PaginationItem>
-                                                <PaginationNext href={shipmentResponse.links.next} />
-                                            </PaginationItem>
-                                        )
-                                    }
-                                </PaginationContent> */}
                             </Pagination>
                         </CardFooter>
                     )

@@ -26,20 +26,15 @@ export function GenericPagination({ links, meta, elipsisLimit, clickAction, clas
           {
             links?.prev && (
               <PaginationItem >
-                <PaginationPrevious href={links.prev} />
+                <PaginationPrevious className="cursor-pointer" onClick={() => clickAction(meta?.current_page - 1)} />
               </PaginationItem>
             )
           }
-
-          {console.log("meta link")}
-          {console.log(metaLinks)}
-          {console.log(metaLinks.length)}
-
           {
             metaLinks.map((page, index) => (
               page?.url && !isNaN(parseInt(page?.label)) && (index + 1) == meta?.last_page || index == 0 ?
                 <PaginationItem key={index} className="cursor-pointer">
-                  <PaginationLink onClick={() => clickAction} isActive={page?.active}>{page?.label}</PaginationLink>
+                  <PaginationLink onClick={() => clickAction(parseInt(page?.label))} isActive={page?.active}>{page?.label}</PaginationLink>
                 </PaginationItem>
                 : (index + 1) < (meta?.current_page - elipsisLimit) || (index + 1) > (meta?.current_page + elipsisLimit) ?
                   (index + 1) == (meta?.current_page - elipsisLimit - 1) || (index + 1) == (meta?.last_page - 1) ?
@@ -49,14 +44,14 @@ export function GenericPagination({ links, meta, elipsisLimit, clickAction, clas
                     : ""
                   :
                   <PaginationItem key={index} className="cursor-pointer">
-                    <PaginationLink onClick={() => clickAction} isActive={page?.active}>{page?.label}</PaginationLink>
+                    <PaginationLink onClick={() => clickAction(parseInt(page?.label))} isActive={page?.active}>{page?.label}</PaginationLink>
                   </PaginationItem>
             ))
           }
           {
             links?.next && (
               <PaginationItem>
-                <PaginationNext href={links.next} />
+                <PaginationNext className="cursor-pointer" onClick={() => clickAction(meta?.current_page + 1)} />
               </PaginationItem>
             )
           }
