@@ -66,7 +66,20 @@ type Shipment = {
 export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     const [shipmentResponse, setShipmentResponse] = useState<PaginateResponse<ShipmentResource>>();
     const [isDisabled, setIsDisabled] = useState(true);
+    const [isClearFilterBtnDisabled, setIsClearFilterBtnDisabled] = useState(false);
+    const [isClearCheckboxFilterBtnDisabled, setIsClearCheckboxFilterBtnDisabled] = useState(false);
     const { url } = usePage();
+    const requiredFields: (keyof ShipmentFilters)[] = [
+        'query',
+        'suppliers_id',
+        'raw_good_types_id',
+        'start_created_at',
+        'end_created_at',
+    ];
+    const checkboxFields: (keyof ShipmentFilters)[] = [
+        'suppliers_id',
+        'raw_good_types_id',
+    ];
 
     const popoverWrapperref = useRef<HTMLDivElement>(null);
     const popoverContentref = useRef<HTMLDivElement>(null);
@@ -75,14 +88,11 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
 
     const [isPopoverOpen, setisPopoverOpen] = useState(false);
 
-    const [extractedParams, setExtractedParams] = useState<Record<string, string | string[] | number | number[]>>();
+    const [extractedParams, setExtractedParams] = useState<Record<string, string | string[] | number | number[]>>({});
 
     const { theme } = useTheme();
 
-    const [filters, setFilters] = useState<ShipmentFilters>({
-        page: 1,
-        limit: 10,
-    });
+    const [filters, setFilters] = useState<ShipmentFilters>({});
 
     const handleClickOutside = (event: MouseEvent) => {
         if (popoverWrapperref.current && !popoverWrapperref.current.contains(event.target as Node) && popoverContentref.current && !popoverContentref.current.contains(event.target as Node)) {
@@ -195,7 +205,27 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     }
 
     const pushUrl = () => {
-        router.get(url.split('?')[0], { ...filters });
+        if (Object.keys(filters).length === Object.keys(extractedParams).length) {
+            Object.keys(filters).forEach(key => {
+                if (Array.isArray(filters[key as keyof ShipmentFilters])) {
+                    if ((filters[key as keyof ShipmentFilters] as string[] | number[]).sort().join(",") === (extractedParams[key as keyof ShipmentFilters] as string[] | number[]).sort().join(",")) {
+                        return
+                    } else {
+                        router.get(url.split('?')[0], { ...filters });
+                    }
+                } else {
+                    if (filters[key as keyof ShipmentFilters] == extractedParams[key as keyof number]) {
+                        return
+                    } else {
+                        router.get(url.split('?')[0], { ...filters });
+                    }
+                }
+
+
+            })
+        } else {
+            router.get(url.split('?')[0], { ...filters });
+        }
     }
 
     useEffect(() => {
@@ -223,16 +253,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     }, []);
 
     useEffect(() => {
-        const requiredFields: (keyof ShipmentFilters)[] = [
-            'query',
-            'suppliers_id',
-            'raw_good_types_id',
-            'start_created_at',
-            'end_created_at',
-        ];
-
         let isDisable = !requiredFields.some((field) => filters[field]);
-
 
         if (extractedParams?.query !== filters?.query) {
             isDisable = false
@@ -240,6 +261,16 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
 
         setIsDisabled(isDisable)
     }, [filters.query, filters.suppliers_id, filters.raw_good_types_id, filters.start_created_at, filters.end_created_at])
+
+    useEffect(() => {
+        let isClearBtnDisable = !requiredFields.some((field) => extractedParams[field]);
+        setIsClearFilterBtnDisabled(isClearBtnDisable)
+
+        let isClearChecboxBtnDisable = !checkboxFields.some((field) => extractedParams[field]);
+        console.log(!isClearChecboxBtnDisable)
+        setIsClearCheckboxFilterBtnDisabled(isClearChecboxBtnDisable)
+    }, [extractedParams])
+
 
     useEffect(() => {
         const extracted: Record<string, string | string[] | number | number[]> = extractQueryParams(window.location.href);
@@ -329,7 +360,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
 
                             }}>
                                 <SelectTrigger className="w-full py-0 border-none rounded-md rounded-r-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-offset-0">
-                                    <SelectValue placeholder="Data" defaultValue={10} />
+                                    <SelectValue placeholder="Tampilkan" defaultValue={10} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="10">10</SelectItem>
@@ -382,8 +413,8 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                                     Pilih supplier atau jenis barang untuk menyaring data
                                                 </p>
                                                 <div className="action-btn-wrapper flex lg:justify-end gap-2 w-2/6">
-                                                    <Button variant={"outline"} disabled={filters?.suppliers_id || filters?.raw_good_types_id ? false : true} onClick={handleClearCheckbox}>Clear</Button>
-                                                    <Button variant={"default"} onClick={() => pushUrl()}>Add Filter</Button>
+                                                    <Button variant={"outline"} disabled={isClearCheckboxFilterBtnDisabled} onClick={handleClearCheckbox}>Clear</Button>
+                                                    <Button variant={"default"} onClick={() => pushUrl()}>Terapkan</Button>
                                                 </div>
                                             </div>
                                         </div>
@@ -478,16 +509,10 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                             </Popover>
                         </div>
                         <div className="lg:w-2/12 w-full text-inherit flex gap-1">
-                            <Button variant={"default"} onClick={() => pushUrl()} className="w-full" disabled={isDisabled}>Terapkan</Button>
+                            <Button variant={"default"} onClick={() => pushUrl()} className="w-1/2 overflow-hidden" disabled={isDisabled}>Terapkan</Button>
+                            <Button variant={"default"} onClick={() => handleClearAllFilter()} className="w-1/2 overflow-hidden" disabled={isClearFilterBtnDisabled}>Clear Filters</Button>
                         </div>
                     </div>
-                    {!isLoading && window.location.search.length > 0 && (
-                        <div className="filters-wrapper p-3">
-                            <div className="header flex gap-2 text-sm"><p>Total {shipmentResponse?.data?.length! > 0 ? shipmentResponse?.meta?.total : 0} data</p> |
-                                <p className="hover:cursor-pointer hover:underline" onClick={() => handleClearAllFilter()}>Clear Filter</p>
-                            </div>
-                        </div>
-                    )}
                     {
                         isLoading ? (
                             <div className="loading-wrapper p-8 flex items-center justify-center">

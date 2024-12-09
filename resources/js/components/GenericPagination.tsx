@@ -3,6 +3,7 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 import { PaginateMeta } from "@/support/interfaces/others/PaginateMeta";
 import { useEffect, useState } from "react";
 import { PaginateMetaLink } from "@/support/interfaces/others/PaginateMetaLink";
+import { cn } from "@/lib/utils";
 
 export function GenericPagination({ links, meta, elipsisLimit, clickAction, className }: {
   links: PaginateLinks,
@@ -21,7 +22,7 @@ export function GenericPagination({ links, meta, elipsisLimit, clickAction, clas
 
   return (
     <>
-      <Pagination className={className}>
+      <Pagination className={cn("overflow-auto", className)}>
         <PaginationContent>
           {
             links?.prev && (
