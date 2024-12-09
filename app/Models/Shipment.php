@@ -37,7 +37,7 @@ class Shipment extends Model
     protected function casts(): array
     {
         return [
-            'shipment_date' => 'datetime:Y/m/d',
+            'shipment_date' => 'datetime',
         ];
     }
 }

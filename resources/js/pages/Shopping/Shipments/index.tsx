@@ -53,6 +53,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { ShipmentFilters } from "@/support/interfaces/filters/ShipmentFilters";
 import { CheckedState } from "@radix-ui/react-checkbox";
 import { router, usePage } from "@inertiajs/react";
+import { GenericPagination } from "@/components/GenericPagination";
 
 type Shipment = {
     auth: {
@@ -83,8 +84,6 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
         limit: 10,
     });
 
-
-
     const handleClickOutside = (event: MouseEvent) => {
         if (popoverWrapperref.current && !popoverWrapperref.current.contains(event.target as Node) && popoverContentref.current && !popoverContentref.current.contains(event.target as Node)) {
             setisPopoverOpen(false);
@@ -97,9 +96,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     })
 
     const handleClickPagination = (page: number) => {
-        const newPageFilter = { ...filters, page: page }
         setFilters({ ...filters, page: page })
-        pushUrl();
     }
 
     async function fetchShipments() {
@@ -261,6 +258,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     useEffect(() => {
         fetchShipments();
     }, []);
+
 
 
     const extractQueryParams = (url: string): Record<string, string | string[] | number | number[]> => {
@@ -486,7 +484,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                     </div>
                     {!isLoading && window.location.search.length > 0 && (
                         <div className="filters-wrapper p-3">
-                            <div className="header flex gap-2 text-sm"><p>Total {shipmentResponse?.meta.total} data</p> |
+                            <div className="header flex gap-2 text-sm"><p>Total {shipmentResponse?.data?.length! > 0 ? shipmentResponse?.meta?.total : 0} data</p> |
                                 <p className="hover:cursor-pointer hover:underline" onClick={() => handleClearAllFilter()}>Clear Filter</p>
                             </div>
                         </div>
@@ -500,15 +498,14 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                             ? "#09090B"
                                             : "#F2F2F2"
                                     }
-                                    width={7}
-                                    height={48}
-
+                                    width={5}
+                                    height={42}
                                     loading={true}
                                     aria-label="Loading Spinner"
                                     data-testid="loader"
                                 />
                             </div>
-                        ) : shipmentResponse?.meta!.total! > 0 ? (
+                        ) : shipmentResponse?.data?.length! > 0 ? (
                             <Table className="mt-2">
                                 <TableHeader>
                                     <TableRow>
@@ -599,6 +596,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                         </div>)
                     }
                 </CardContent>
+
                 {
                     shipmentResponse?.links && shipmentResponse?.meta && (
                         <CardFooter>
@@ -606,7 +604,10 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                 Showing <strong>{shipmentResponse?.meta?.from}-{shipmentResponse?.meta?.to}</strong> of <strong>{shipmentResponse?.meta.total}</strong> Data
                             </div>
                             <Pagination className="justify-end">
-                                <PaginationContent>
+                                {
+                                    <GenericPagination links={shipmentResponse?.links} meta={shipmentResponse?.meta} elipsisLimit={2} clickAction={() => console.log('first')} className="justify-end" />
+                                }
+                                {/* <PaginationContent>
                                     {
                                         shipmentResponse.links?.prev && (
                                             <PaginationItem>
@@ -614,12 +615,15 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                             </PaginationItem>
                                         )
                                     }
-                                    {shipmentResponse?.meta?.links?.map((page, index) => (
-                                        page?.url &&
-                                        <PaginationItem key={index} className="cursor-pointer">
-                                            <PaginationLink onClick={() => handleClickPagination(parseInt(page?.label))} isActive={page?.active}>{page?.label}</PaginationLink>
-                                        </PaginationItem>
-                                    ))}
+
+                                    {
+                                        shipmentResponse?.meta?.links?.map((page, index) => (
+                                            page?.url && !isNaN(parseInt(page?.label)) &&
+                                            <PaginationItem key={index} className="cursor-pointer">
+                                                <PaginationLink onClick={() => handleClickPagination(parseInt(page?.label))} isActive={page?.active}>{page?.label}</PaginationLink>
+                                            </PaginationItem>
+                                        ))
+                                    }
                                     {
                                         shipmentResponse.links?.next && (
                                             <PaginationItem>
@@ -627,7 +631,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                             </PaginationItem>
                                         )
                                     }
-                                </PaginationContent>
+                                </PaginationContent> */}
                             </Pagination>
                         </CardFooter>
                     )

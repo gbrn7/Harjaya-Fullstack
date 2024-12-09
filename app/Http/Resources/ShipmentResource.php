@@ -22,7 +22,7 @@ class ShipmentResource extends JsonResource
             "warehouse_num" => $this->warehouse_num,
             "plat_number" => $this->plat_number,
             "driver_name" => $this->driver_name,
-            "shipment_date" => $this->shipment_date->format("Y/m/d"),
+            "shipment_date" => $this->shipment_date->format("d/m/Y"),
             "created_at" => $this->created_at,
             "updated_at" => $this->updated_at,
         ];
