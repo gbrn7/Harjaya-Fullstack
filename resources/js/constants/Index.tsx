@@ -1,5 +1,4 @@
 import { sidebarItemsProps } from "@/types";
-import { usePage } from "@inertiajs/react";
 import { LayoutDashboard, ShoppingBag } from "lucide-react";
 
 export const ROUTES = {

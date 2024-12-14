@@ -24,7 +24,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, ChevronDown, MoreHorizontal, SlidersHorizontal, X } from "lucide-react";
+import { ArrowDownToLine, CalendarIcon, ChevronDown, MoreHorizontal, SlidersHorizontal, X } from "lucide-react";
 import {
     Pagination,
     PaginationContent,
@@ -54,6 +54,7 @@ import { ShipmentFilters } from "@/support/interfaces/filters/ShipmentFilters";
 import { CheckedState } from "@radix-ui/react-checkbox";
 import { router, usePage } from "@inertiajs/react";
 import { GenericPagination } from "@/components/GenericPagination";
+import { downloadShipmentDataToExcel } from "@/lib/xlsx";
 
 type Shipment = {
     auth: {
@@ -68,6 +69,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     const [isDisabled, setIsDisabled] = useState(true);
     const [isClearFilterBtnDisabled, setIsClearFilterBtnDisabled] = useState(false);
     const [isClearCheckboxFilterBtnDisabled, setIsClearCheckboxFilterBtnDisabled] = useState(false);
+    const [checkedBoxs, setCheckedBoxs] = useState<ShipmentResource[]>();
     const { url } = usePage();
     const requiredFields: (keyof ShipmentFilters)[] = [
         'query',
@@ -85,6 +87,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
     const popoverContentref = useRef<HTMLDivElement>(null);
 
     const [isLoading, setIsLoading] = useState(false);
+
 
     const [isPopoverOpen, setisPopoverOpen] = useState(false);
 
@@ -228,6 +231,25 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
         }
     }
 
+    const handleTableCheckBox = (checked: CheckedState, shipment: ShipmentResource) => {
+        if (checked) {
+            return setCheckedBoxs([...checkedBoxs || [], shipment])
+        }
+
+        return setCheckedBoxs(current => {
+            const newState = current?.filter((value) => value?.id !== shipment.id)
+            return newState
+        })
+    }
+
+    const handleHeaderTableCheckBox = (checked: CheckedState, shipmentResponse: ShipmentResource[]) => {
+        if (checked) {
+            return setCheckedBoxs(shipmentResponse)
+        }
+
+        return setCheckedBoxs([])
+    }
+
     useEffect(() => {
         if (date?.from && date?.to) {
             setFilters({
@@ -338,8 +360,6 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
             header={"Data Pengiriman"}
             breadcrumbItems={DataBelanjaBreadcrumbs}
         >
-            {console.log("filters")}
-            {console.log(filters)}
             <Card className="pb-12">
                 <CardHeader >
                     <CardTitle>Data Pengiriman</CardTitle>
@@ -348,169 +368,174 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="filter-wrapper space-y-3 lg:space-y-0 lg:flex items-center gap-2 text-md font-medium">
-                        <div className="lg:w-1/12 w-full border-2 rounded-md">
-                            <Select defaultValue={filters?.limit?.toString()} value={filters?.limit?.toString()} onValueChange={(e) => {
-                                setFilters({
-                                    ...filters,
-                                    limit: parseInt(e.valueOf())
-                                })
+                    <div className="filter-wrapper space-y-3 lg:space-y-1">
+                        <div className="btn-wrapper flex justify-end"><Button onClick={() => downloadShipmentDataToExcel(checkedBoxs)} disabled={checkedBoxs?.length ? false : true} className="space-x-3 " variant={"ghost"}><span className="text-sm">Export Excel</span> <ArrowDownToLine className="w-5" /></Button></div>
+                        <div className="lg:flex space-y-3 lg:space-y-1 gap-2 text-md font-medium">
+                            <div className="lg:w-1/12 w-full border-2 rounded-md">
+                                <Select defaultValue={filters?.limit?.toString()} value={filters?.limit?.toString()} onValueChange={(e) => {
+                                    setFilters({
+                                        ...filters,
+                                        limit: parseInt(e.valueOf())
+                                    })
 
-                                setIsDisabled(false)
+                                    setIsDisabled(false)
 
-                            }}>
-                                <SelectTrigger className="w-full py-0 border-none rounded-md rounded-r-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-offset-0">
-                                    <SelectValue placeholder="Tampilkan" defaultValue={10} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="10">10</SelectItem>
-                                    <SelectItem value="15">15</SelectItem>
-                                    <SelectItem value="20">20</SelectItem>
-                                    <SelectItem value="25">25</SelectItem>
-                                    <SelectItem value="30">30</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="search-bar-filter-wrapper w-full lg:w-5/12 lg:flex text-inherit">
-                            <div className="wrapper border-2 w-full lg:w-1/3 rounded-t-md lg:rounded-l-md lg:rounded-r-none">
-                                <Select defaultValue={filters?.type} value={filters?.type} onValueChange={(e) => setFilters({
-                                    ...filters,
-                                    type: e.valueOf()
-                                })}>
+                                }}>
                                     <SelectTrigger className="w-full py-0 border-none rounded-md rounded-r-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-offset-0">
-                                        <SelectValue placeholder="Pilih Kolom" defaultValue={"id"} />
+                                        <SelectValue placeholder="Tampilkan" defaultValue={10} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectGroup>
-                                            <SelectItem value="id">ID</SelectItem>
-                                            <SelectItem value="driver_name">Driver</SelectItem>
-                                            <SelectItem value="plat_number">Nomor Plat</SelectItem>
-                                        </SelectGroup>
+                                        <SelectItem value="10">10</SelectItem>
+                                        <SelectItem value="15">15</SelectItem>
+                                        <SelectItem value="20">20</SelectItem>
+                                        <SelectItem value="25">25</SelectItem>
+                                        <SelectItem value="30">30</SelectItem>
+                                        <SelectItem value="50">50</SelectItem>
+                                        <SelectItem value="100">100</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="wrapper w-full border-2 lg:w-2/3 rounded-b-md lg:rounded-r-md lg:rounded-l-none lg:border-s-0 border-t-0 lg:border-t-2">
-                                <Input
-                                    type="search"
-                                    placeholder="Search..."
-                                    value={filters?.query || ""}
-                                    onChange={handleInputChange}
-                                    className="w-full rounded-md lg:rounded-l-none border-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                                />
-                            </div>
-                        </div>
-                        <div ref={popoverWrapperref} className="popover-wrapper border-2 rounded-md w-full lg:w-2/12 text-inherit" >
-                            <Popover open={isPopoverOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button onClick={() => setisPopoverOpen(!isPopoverOpen)} variant="outline" className="rounded-md justify-between border-none w-full hover:bg-transparent"><span className="text-muted-foreground text-md font-medium flex items-center"><SlidersHorizontal className="h-4 w-4 me-2" />Filter Data</span> <ChevronDown className="h-4 w-4 opacity-50" /></Button>
-                                </PopoverTrigger>
-                                <PopoverContent ref={popoverContentref} className="lg:w-[38rem] md:w-[30rem] w-[25rem]" id="">
-                                    <div className="h-72 overflow-auto p-2 space-y-3">
-                                        <div className="header-wrapper space-y-2 lg:space-y-2">
-                                            <h4 className="text-md leading-none">Filter Data</h4>
-                                            <div className="desc-wrapper lg:flex lg:justify-between items-baseline space-y-1">
-                                                <p className="text-sm text-muted-foreground w-full lg:w-4/6">
-                                                    Pilih supplier atau jenis barang untuk menyaring data
-                                                </p>
-                                                <div className="action-btn-wrapper flex lg:justify-end gap-2 w-2/6">
-                                                    <Button variant={"outline"} disabled={isClearCheckboxFilterBtnDisabled} onClick={handleClearCheckbox}>Clear</Button>
-                                                    <Button variant={"default"} onClick={() => pushUrl()}>Terapkan</Button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="filter-wrapper w-full flex h-full ">
-                                            <div className="supplier-filter-wrapper w-1/2">
-                                                <div className="header w-full py-2 border border-gray-400 border-x-0 border-t-0">
-                                                    Supplier
-                                                </div>
-                                                <div className="filter-list-wrapper space-y-3  overflow-hidden py-2">
-                                                    {suppliers.map((supplier, index) => (
-                                                        <div className="flex items-center space-x-2" key={index} >
-                                                            <Checkbox checked={filters?.suppliers_id?.includes(supplier.id) || false} id="suppliers" value={supplier.id} onCheckedChange={(checked) => handleSuppliersCheckboxChange(checked, supplier)} />
-                                                            <label
-                                                                htmlFor="suppliers"
-                                                                className="text-sm font-medium capitalize leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                                            >
-                                                                {supplier.name}
-                                                            </label>
-                                                        </div>
-                                                    ))}
-
-                                                </div>
-                                            </div>
-                                            <div className="goodType-filter-wrapper w-1/2">
-                                                <div className="header w-full py-2 ps-2 border-t-0 border border-gray-400 border-e-0">
-                                                    Jenis Barang
-                                                </div>
-                                                <div className="filter-list-wrapper space-y-3  h-full overflow-hidden border border-y-0 border-gray-400 border-e-0 py-2 ps-2">
-                                                    {rawGoodTypes.map((rawGoodType, index) => (
-                                                        <div className="flex items-center space-x-2" key={index}>
-                                                            <Checkbox checked={filters.raw_good_types_id?.includes(rawGoodType.id) || false} id="rawGoodType" value={rawGoodType.id} onCheckedChange={(checked) => handleRawGoodsCheckboxChange(checked, rawGoodType)} />
-                                                            <label
-                                                                htmlFor="terms"
-                                                                className="text-sm font-medium capitalize leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                                            >
-                                                                {rawGoodType.name}
-                                                            </label>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                </PopoverContent>
-                            </Popover>
-                        </div>
-                        <div className="overflow-hidden w-full lg:w-2/12 text-inherit">
-                            <Popover>
-                                <div className="flex  items-center border-2 rounded-md">
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            id="date"
-                                            variant={"outline"}
-                                            className={
-                                                "border-0 flex w-10/12 justify-between items-center font-normal hover:bg-transparent rounded-md"
-                                            }
-                                        >
-                                            <div className="content-wrapper overflow-hidden flex items-center">
-                                                {date?.from && date?.to ? (
-                                                    <span className="text-sm">
-                                                        {format(date.from, "dd/LL/y")} -{" "}
-                                                        {format(date.to, "dd/LL/y")}
-                                                    </span>
-                                                ) : (
-                                                    <>
-                                                        <CalendarIcon className="mr-2 text-muted-foreground h-4 w-4" />
-
-                                                        <span className="text-muted-foreground text-md font-medium">Rentang Tanggal</span>
-                                                    </>
-                                                )}
-                                            </div>
-
-                                        </Button>
-                                    </PopoverTrigger>
-
-                                    {date?.from && date?.to && (<div className="w-2/12 flex justify-center items-center">
-                                        <X className="h-4 w-4" onClick={handleClearDate} />
-                                    </div>)}
+                            <div className="search-bar-filter-wrapper w-full lg:w-5/12 lg:flex text-inherit">
+                                <div className="wrapper border-2 w-full lg:w-1/3 rounded-t-md lg:rounded-l-md lg:rounded-r-none">
+                                    <Select defaultValue={filters?.type} value={filters?.type} onValueChange={(e) => setFilters({
+                                        ...filters,
+                                        type: e.valueOf()
+                                    })}>
+                                        <SelectTrigger className="w-full py-0 border-none rounded-md rounded-r-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-offset-0">
+                                            <SelectValue placeholder="Pilih Kolom" defaultValue={"id"} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                <SelectItem value="id">ID</SelectItem>
+                                                <SelectItem value="driver_name">Driver</SelectItem>
+                                                <SelectItem value="plat_number">Nomor Plat</SelectItem>
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
-                                <PopoverContent className="w-auto p-0" align="end">
-                                    <Calendar
-                                        initialFocus
-                                        mode="range"
-                                        defaultMonth={date?.from}
-                                        selected={date}
-                                        onSelect={setDate}
-                                        numberOfMonths={2}
+                                <div className="wrapper w-full border-2 lg:w-2/3 rounded-b-md lg:rounded-r-md lg:rounded-l-none lg:border-s-0 border-t-0 lg:border-t-2">
+                                    <Input
+                                        type="search"
+                                        placeholder="Search..."
+                                        value={filters?.query || ""}
+                                        onChange={handleInputChange}
+                                        className="w-full rounded-md lg:rounded-l-none border-none focus-visible:ring-0 focus-visible:ring-offset-0"
                                     />
-                                </PopoverContent>
+                                </div>
+                            </div>
+                            <div ref={popoverWrapperref} className="popover-wrapper border-2 rounded-md w-full lg:w-2/12 text-inherit" >
+                                <Popover open={isPopoverOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button onClick={() => setisPopoverOpen(!isPopoverOpen)} variant="outline" className="rounded-md justify-between border-none w-full hover:bg-transparent"><span className="text-muted-foreground text-md font-medium flex items-center"><SlidersHorizontal className="h-4 w-4 me-2" />Filter Data</span> <ChevronDown className="h-4 w-4 opacity-50" /></Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent ref={popoverContentref} className="lg:w-[38rem] md:w-[30rem] w-[25rem]" id="">
+                                        <div className="h-72 overflow-auto p-2 space-y-3">
+                                            <div className="header-wrapper space-y-2 lg:space-y-2">
+                                                <h4 className="text-md leading-none">Filter Data</h4>
+                                                <div className="desc-wrapper lg:flex lg:justify-between items-baseline space-y-1">
+                                                    <p className="text-sm text-muted-foreground w-full lg:w-4/6">
+                                                        Pilih supplier atau jenis barang untuk menyaring data
+                                                    </p>
+                                                    <div className="action-btn-wrapper flex lg:justify-end gap-2 w-2/6">
+                                                        <Button variant={"outline"} disabled={isClearCheckboxFilterBtnDisabled} onClick={handleClearCheckbox}>Clear</Button>
+                                                        <Button variant={"default"} onClick={() => pushUrl()}>Terapkan</Button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="filter-wrapper w-full flex h-full ">
+                                                <div className="supplier-filter-wrapper w-1/2">
+                                                    <div className="header w-full py-2 border border-gray-400 border-x-0 border-t-0">
+                                                        Supplier
+                                                    </div>
+                                                    <div className="filter-list-wrapper space-y-3  overflow-hidden py-2">
+                                                        {suppliers.map((supplier, index) => (
+                                                            <div className="flex items-center space-x-2" key={index} >
+                                                                <Checkbox checked={filters?.suppliers_id?.includes(supplier.id) || false} id="suppliers" value={supplier.id} onCheckedChange={(checked) => handleSuppliersCheckboxChange(checked, supplier)} />
+                                                                <label
+                                                                    htmlFor="suppliers"
+                                                                    className="text-sm font-medium capitalize leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                                >
+                                                                    {supplier.name}
+                                                                </label>
+                                                            </div>
+                                                        ))}
 
-                            </Popover>
-                        </div>
-                        <div className="lg:w-2/12 w-full text-inherit flex gap-1">
-                            <Button variant={"default"} onClick={() => pushUrl()} className="w-1/2 overflow-hidden" disabled={isDisabled}>Terapkan</Button>
-                            <Button variant={"default"} onClick={() => handleClearAllFilter()} className="w-1/2 overflow-hidden" disabled={isClearFilterBtnDisabled}>Clear Filters</Button>
+                                                    </div>
+                                                </div>
+                                                <div className="goodType-filter-wrapper w-1/2">
+                                                    <div className="header w-full py-2 ps-2 border-t-0 border border-gray-400 border-e-0">
+                                                        Jenis Barang
+                                                    </div>
+                                                    <div className="filter-list-wrapper space-y-3  h-full overflow-hidden border border-y-0 border-gray-400 border-e-0 py-2 ps-2">
+                                                        {rawGoodTypes.map((rawGoodType, index) => (
+                                                            <div className="flex items-center space-x-2" key={index}>
+                                                                <Checkbox checked={filters.raw_good_types_id?.includes(rawGoodType.id) || false} id="rawGoodType" value={rawGoodType.id} onCheckedChange={(checked) => handleRawGoodsCheckboxChange(checked, rawGoodType)} />
+                                                                <label
+                                                                    htmlFor="terms"
+                                                                    className="text-sm font-medium capitalize leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                                >
+                                                                    {rawGoodType.name}
+                                                                </label>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+                            <div className="overflow-hidden w-full lg:w-2/12 text-inherit">
+                                <Popover>
+                                    <div className="flex  items-center border-2 rounded-md">
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                id="date"
+                                                variant={"outline"}
+                                                className={
+                                                    "border-0 flex w-10/12 justify-between items-center font-normal hover:bg-transparent rounded-md"
+                                                }
+                                            >
+                                                <div className="content-wrapper overflow-hidden flex items-center">
+                                                    {date?.from && date?.to ? (
+                                                        <span className="text-sm">
+                                                            {format(date.from, "dd/LL/y")} -{" "}
+                                                            {format(date.to, "dd/LL/y")}
+                                                        </span>
+                                                    ) : (
+                                                        <>
+                                                            <CalendarIcon className="mr-2 text-muted-foreground h-4 w-4" />
+
+                                                            <span className="text-muted-foreground text-md font-medium">Rentang Tanggal</span>
+                                                        </>
+                                                    )}
+                                                </div>
+
+                                            </Button>
+                                        </PopoverTrigger>
+
+                                        {date?.from && date?.to && (<div className="w-2/12 flex justify-center items-center">
+                                            <X className="h-4 w-4" onClick={handleClearDate} />
+                                        </div>)}
+                                    </div>
+                                    <PopoverContent className="w-auto p-0" align="end">
+                                        <Calendar
+                                            initialFocus
+                                            mode="range"
+                                            defaultMonth={date?.from}
+                                            selected={date}
+                                            onSelect={setDate}
+                                            numberOfMonths={2}
+                                        />
+                                    </PopoverContent>
+
+                                </Popover>
+                            </div>
+                            <div className="lg:w-2/12 w-full text-inherit flex gap-1">
+                                <Button variant={"default"} onClick={() => pushUrl()} className="w-1/2 overflow-hidden" disabled={isDisabled}>Terapkan</Button>
+                                <Button variant={"default"} onClick={() => handleClearAllFilter()} className="w-1/2 overflow-hidden" disabled={isClearFilterBtnDisabled}>Clear Filters</Button>
+                            </div>
                         </div>
                     </div>
                     {
@@ -530,9 +555,10 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                 />
                             </div>
                         ) : shipmentResponse?.data?.length! > 0 ? (
-                            <Table className="mt-2">
+                            <Table className="mt-3">
                                 <TableHeader>
                                     <TableRow>
+                                        <TableHead className="md:table-cell font-bold"><Checkbox onCheckedChange={(checked) => handleHeaderTableCheckBox(checked, shipmentResponse?.data || [])} /></TableHead>
                                         <TableHead className="hidden md:table-cell font-bold">ID Pengiriman</TableHead>
                                         <TableHead className="font-bold">Supplier</TableHead>
                                         <TableHead className="hidden md:table-cell font-bold">Nomor Plat</TableHead>
@@ -551,6 +577,9 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                     {
                                         shipmentResponse?.data?.map((shipment, index) => (
                                             <TableRow key={index} className="font-medium">
+                                                <TableCell className="md:table-cell">
+                                                    <Checkbox checked={checkedBoxs?.includes(shipment)} onCheckedChange={(checked) => handleTableCheckBox(checked, shipment)} />
+                                                </TableCell>
                                                 <TableCell className="hidden md:table-cell">
                                                     {shipment.id}
                                                 </TableCell>
@@ -598,6 +627,7 @@ export default function Index({ auth, suppliers, rawGoodTypes }: Shipment) {
                                     }
                                 </TableBody>
                             </Table>
+
                         ) : (<div className="flex flex-col items-center justify-center mx-3">
                             <div className="img-wrapper w-1/12">
                                 {theme == "light" ? (
