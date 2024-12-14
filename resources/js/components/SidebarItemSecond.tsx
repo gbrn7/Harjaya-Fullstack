@@ -1,12 +1,13 @@
 import { useContext, useEffect, useState } from "react";
-import { Link } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 import { ChevronDown } from "lucide-react";
 import { SidebarSheetContext } from "@/context/Sidebar";
-import { SidebarType } from "@/types";
+import { sidebarItemsProps } from "@/types";
 
-export function SidebarItemSecond({ icon, text, isActive, subMenu, link }: SidebarType) {
+export function SidebarItemSecond({ icon, label, subMenu, link }: sidebarItemsProps) {
     const { isSheetExpended } = useContext(SidebarSheetContext);
-    const [isOpen, setIsOpen] = useState(isActive ? true : false);
+    const { url } = usePage();
+    const [isOpen, setIsOpen] = useState(url.startsWith(new URL(link).pathname) ? true : false);
 
     return (
         <>
@@ -16,7 +17,7 @@ export function SidebarItemSecond({ icon, text, isActive, subMenu, link }: Sideb
                         }`}
                 >
                     <div
-                        className={`flex py-2 px-3 rounded-md hover:bg-accent ${isActive && "bg-accent"
+                        className={`flex py-2 px-3 rounded-md hover:bg-accent ${url.startsWith(new URL(link).pathname) && "bg-accent"
                             }`}
                         onClick={() => setIsOpen(!isOpen)}
                     >
@@ -24,7 +25,7 @@ export function SidebarItemSecond({ icon, text, isActive, subMenu, link }: Sideb
                         <div
                             className={`overflow-hidden flex justify-between sidebar-item-text ml-3 transition-all w-full truncate`}
                         >
-                            <span>{text}</span>
+                            <span>{label}</span>
 
                             <ChevronDown
                                 className={`transition-all duration-300 ${isOpen && "rotate-180"
@@ -37,12 +38,12 @@ export function SidebarItemSecond({ icon, text, isActive, subMenu, link }: Sideb
                             {subMenu.map((item, index) => (
                                 <li
                                     className={`pl-11 py-2
-                         hover:bg-accent truncate ${window.location.href === item.link && "bg-accent"
+                         hover:bg-accent truncate ${url.startsWith(new URL(item.link).pathname) && "bg-accent"
                                         }`}
                                     key={index}
                                 >
                                     <Link href={item.link} className="block">
-                                        {item.text}
+                                        {item.label}
                                     </Link>
                                 </li>
                             ))}
@@ -51,7 +52,7 @@ export function SidebarItemSecond({ icon, text, isActive, subMenu, link }: Sideb
                 </li>
             ) : (
                 <li
-                    className={`relative items-center py-2 px-3 my-1 font-medium rounded-md cursor-pointer transition-all group  ${isActive ? "bg-accent text-primary" : "hover:bg-accent"
+                    className={`relative items-center py-2 px-3 my-1 font-medium rounded-md cursor-pointer transition-all group  ${url.startsWith(new URL(link).pathname) ? "bg-accent text-primary" : "hover:bg-accent"
                         }`}
                 >
                     <Link className="flex" href={link}>
@@ -59,14 +60,14 @@ export function SidebarItemSecond({ icon, text, isActive, subMenu, link }: Sideb
                         <span
                             className={`overflow-hidden sidebar-item-text ml-3 transition-all w-full truncate`}
                         >
-                            {text}
+                            {label}
                         </span>
 
                         {!isSheetExpended && (
                             <div
                                 className={`absolute left-full rounded-md px-2 text-nowrap border py-1 ml-6 bg-background text-sm transition-all text-primary invisible opacity-20 -translate-x-3 group-hover:opacity-100 group-hover:translate-x-0 group-hover:visible hover:bg-accent`}
                             >
-                                {text}
+                                {label}
                             </div>
                         )}
                     </Link>

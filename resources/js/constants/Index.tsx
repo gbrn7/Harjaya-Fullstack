@@ -8,36 +8,33 @@ export const ROUTES = {
 
 
 export function sidebars(): sidebarItemsProps[] {
-    const { url } = usePage();
 
     return [
         {
             icon: <LayoutDashboard size={20} />,
-            text: "Dashboard",
-            link: route("dashboard"),
-            isActive: url.startsWith("/dashboard"),
+            label: "Dashboard",
+            link: route("dashboard")
         },
         {
             icon: <ShoppingBag size={20} />,
-            text: "Data Belanja",
+            label: "Data Belanja",
             link: route("shopping"),
-            isActive: url.startsWith("/shopping"),
             subMenu: [
                 {
-                    text: "Data Pengiriman",
+                    label: "Data Pengiriman",
                     link: route("shopping.shipments.index"),
                 },
                 {
-                    text: "Data Barang",
-                    link: route("shopping"),
+                    label: "Data Barang",
+                    link: route("shopping.goods.index"),
                 },
                 {
-                    text: "Data Tipe Barang",
-                    link: route("shopping"),
+                    label: "Data Tipe Barang",
+                    link: route("shopping.goods-types.index"),
                 },
                 {
-                    text: "Data Supplier",
-                    link: route("shopping"),
+                    label: "Data Supplier",
+                    link: route("shopping.suppliers.index"),
                 },
             ],
         },

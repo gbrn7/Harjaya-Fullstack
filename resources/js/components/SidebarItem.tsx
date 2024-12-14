@@ -1,12 +1,13 @@
 import { useContext, useState } from "react";
-import { Link } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 import { SidebarContext } from "@/context/Sidebar";
 import { ChevronDown } from "lucide-react";
-import { SidebarType } from "@/types";
+import { sidebarItemsProps } from "@/types";
 
-export function SidebarItem({ icon, text, isActive, subMenu, link }: SidebarType) {
+export function SidebarItem({ icon, label, subMenu, link }: sidebarItemsProps) {
     const { isExpended } = useContext(SidebarContext);
-    const [isOpen, setIsOpen] = useState(isActive ? true : false);
+    const { url } = usePage();
+    const [isOpen, setIsOpen] = useState(url.startsWith(new URL(link).pathname) ? true : false);
 
     return (
         <>
@@ -16,7 +17,7 @@ export function SidebarItem({ icon, text, isActive, subMenu, link }: SidebarType
                         }`}
                 >
                     <div
-                        className={`flex py-2 px-3 rounded-md hover:bg-accent ${isActive && "bg-accent"
+                        className={`flex py-2 px-3 rounded-md hover:bg-accent ${url.startsWith(new URL(link).pathname) && "bg-accent"
                             }`}
                         onClick={() => setIsOpen(!isOpen)}
                     >
@@ -25,7 +26,7 @@ export function SidebarItem({ icon, text, isActive, subMenu, link }: SidebarType
                             className={`overflow-hidden flex justify-between sidebar-item-text transition-all w-0 truncate ${isExpended ? "w-48 ml-3" : "w-0"
                                 }`}
                         >
-                            <span>{isExpended && text}</span>
+                            <span>{isExpended && label}</span>
                             {isExpended && (
                                 <ChevronDown
                                     className={`transition-all duration-300 ${isOpen && "rotate-180"
@@ -40,8 +41,7 @@ export function SidebarItem({ icon, text, isActive, subMenu, link }: SidebarType
                                 <ul className="floatSubemenuWrapper">
                                     {subMenu.map((item, index) => (
                                         <li
-                                            className={`py-2 truncate px-3 hover:bg-accent rounded-md ${window.location.href ===
-                                                item.link && "bg-accent"
+                                            className={`py-2 truncate px-3 hover:bg-accent rounded-md ${url.startsWith(new URL(item.link).pathname) && "bg-accent"
                                                 }`}
                                             key={index}
                                         >
@@ -49,7 +49,7 @@ export function SidebarItem({ icon, text, isActive, subMenu, link }: SidebarType
                                                 href={item.link}
                                                 className="block truncate"
                                             >
-                                                {item.text}
+                                                {item.label}
                                             </Link>
                                         </li>
                                     ))}
@@ -62,12 +62,12 @@ export function SidebarItem({ icon, text, isActive, subMenu, link }: SidebarType
                             {subMenu.map((item, index) => (
                                 <li
                                     className={`pl-11 py-2
-                         hover:bg-accent truncate ${window.location.href === item.link && "bg-accent"
+                         hover:bg-accent truncate ${url.startsWith(new URL(item.link).pathname) && "bg-accent"
                                         }`}
                                     key={index}
                                 >
                                     <Link href={item.link} className="block truncate">
-                                        {item.text}
+                                        {item.label}
                                     </Link>
                                 </li>
                             ))}
@@ -76,7 +76,7 @@ export function SidebarItem({ icon, text, isActive, subMenu, link }: SidebarType
                 </li>
             ) : (
                 <li
-                    className={`relative items-center py-2 px-3 my-1 font-medium rounded-md cursor-pointer transition-all group  ${isActive ? "bg-accent text-primary" : "hover:bg-accent"
+                    className={`relative items-center py-2 px-3 my-1 font-medium rounded-md cursor-pointer transition-all group  ${url.startsWith(new URL(link).pathname) ? "bg-accent text-primary" : "hover:bg-accent"
                         }`}
                 >
                     <Link className="flex" href={link}>
@@ -85,14 +85,14 @@ export function SidebarItem({ icon, text, isActive, subMenu, link }: SidebarType
                             className={`overflow-hidden sidebar-item-text transition-all w-0 ${isExpended ? "w-48 ml-3" : "w-0"
                                 }`}
                         >
-                            {isExpended && text}
+                            {isExpended && label}
                         </span>
 
                         {!isExpended && (
                             <div
                                 className={`absolute left-full rounded-md px-2 text-nowrap border py-1 ml-6 bg-background text-sm transition-all text-primary invisible opacity-20 -translate-x-3 group-hover:opacity-100 group-hover:translate-x-0 group-hover:visible hover:bg-accent`}
                             >
-                                {text}
+                                {label}
                             </div>
                         )}
                     </Link>

@@ -69,9 +69,8 @@ export default function Sidebar() {
                         sidebarItems.map((item, index) => (
                             <SidebarItem
                                 icon={item.icon}
-                                text={item.text}
+                                label={item.label}
                                 link={item.link}
-                                isActive={item.isActive}
                                 subMenu={item?.subMenu}
                                 key={index}
                             />
@@ -109,9 +108,8 @@ export default function Sidebar() {
                         sidebarItems.map((item, index) => (
                             <SidebarItemSecond
                                 icon={item.icon}
-                                text={item.text}
+                                label={item.label}
                                 link={item.link}
-                                isActive={item.isActive}
                                 subMenu={item.subMenu}
                                 key={index}
                             />

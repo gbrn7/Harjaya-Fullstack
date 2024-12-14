@@ -29,6 +29,9 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('shopping')->name('shopping.')->group(function () {
         Route::get('/shipments', [ShipmentsController::class, 'index'])->name('shipments.index');
+        Route::get('/goods', [ShipmentsController::class, 'index'])->name('goods.index');
+        Route::get('/good-types', [ShipmentsController::class, 'index'])->name('goods-types.index');
+        Route::get('/suppliers', [ShipmentsController::class, 'index'])->name('suppliers.index');
     });
 });
 

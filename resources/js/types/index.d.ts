@@ -2,12 +2,11 @@ import { User } from "@/support/models/User";
 
 export interface sidebarItemsProps {
     icon: React.ReactNode,
-    text: string,
+    label: string,
     link: string,
-    isActive: boolean,
     subMenu?:
     {
-        text: string,
+        label: string,
         link: string,
     }[]
 }
@@ -46,17 +45,4 @@ export interface AuthenticatedLayoutProps  {
         label: string,
         routeName: string
     }[]
-}
-
-type SidebarType = {
-    icon: React.ReactNode,
-    text: string,
-    isActive: boolean,
-    subMenu?:
-    {
-        text: string,
-        link: string,
-    }[]
-    ,
-    link: string
 }
